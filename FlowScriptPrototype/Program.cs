@@ -6,7 +6,7 @@ namespace FlowScriptPrototype
     {
         static void Main(string[] args)
         {
-            CustomNode.CreatePrototype("Increment", 1, 1, node => {
+            CustomNode.CreatePrototype("Tools", "Increment", 1, 1, node => {
                 var addc = node.Add(new ConstNode(new IntSignal(1)));
                 var addo = node.Add(new AddNode());
 
@@ -21,7 +21,7 @@ namespace FlowScriptPrototype
                     .ConnectToInput(node.GetOutput(0));
             });
 
-            CustomNode.CreatePrototype("Loop", 2, 3, node => {
+            CustomNode.CreatePrototype("Tools", "Loop", 2, 3, node => {
                 var comp = node.Add(new LessThanNode());
 
                 node.GetInput(0)
@@ -38,10 +38,10 @@ namespace FlowScriptPrototype
                     .ConnectToInput(node.GetOutput(1));
             });
 
-            var loop = CustomNode.Get("Loop");
+            var loop = CustomNode.GetInstance("Tools", "Loop");
             var prt1 = new PrintNode();
             var prt2 = new PrintNode();
-            var incr = CustomNode.Get("Increment");
+            var incr = CustomNode.GetInstance("Tools", "Increment");
             var done = new ConstNode(new StringSignal("Done!"));
 
             loop.ConnectToInput(0, prt1.Input)

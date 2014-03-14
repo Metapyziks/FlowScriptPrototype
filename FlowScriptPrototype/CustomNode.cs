@@ -6,19 +6,31 @@ namespace FlowScriptPrototype
 {
     abstract class CustomNode : Node
     {
-        private static Dictionary<String, PrototypeNode> _prototypes = new Dictionary<string, PrototypeNode>();
+        private static Dictionary<String, Dictionary<String, PrototypeNode>> _prototypes =
+            new Dictionary<string, Dictionary<string, PrototypeNode>>();
 
-        public static void CreatePrototype(String identifier, int inputs, int outputs, Action<PrototypeNode> constructor)
+        public static void CreatePrototype(String category, String identifier, int inputs, int outputs, Action<PrototypeNode> constructor)
         {
+            if (!_prototypes.ContainsKey(category)) {
+                _prototypes.Add(category, new Dictionary<string, PrototypeNode>());
+            }
+
             var node = new PrototypeNode(inputs, outputs);
-            _prototypes.Add(identifier, node);
+            _prototypes[category].Add(identifier, node);
 
             constructor(node);
         }
 
-        public static ReferenceNode Get(String identifier)
+        public static IEnumerable<String> Categories { get { return _prototypes.Keys; } }
+
+        public static IEnumerable<String> GetIdentifiers(String category)
         {
-            return new ReferenceNode(_prototypes[identifier]);
+            return _prototypes[category].Keys;
+        }
+
+        public static ReferenceNode GetInstance(String category, String identifier)
+        {
+            return new ReferenceNode(_prototypes[category][identifier]);
         }
 
         protected CustomNode(int inputs, int outputs)
