@@ -29,6 +29,17 @@ namespace FlowScriptPrototype
             _outputs[index].Add(input);
             return this;
         }
+
+        public override Node ClearOutputs(int index)
+        {
+            _outputs[index].Clear();
+            return this;
+        }
+
+        public override IEnumerable<Socket> GetOutputs(int index)
+        {
+            return _outputs[index];
+        }
     }
 
     class SocketNode : NativeNode
@@ -45,9 +56,25 @@ namespace FlowScriptPrototype
             return this;
         }
 
+        public SocketNode ClearOutputs()
+        {
+            ClearOutputs(0);
+            return this;
+        }
+
+        public IEnumerable<Socket> GetOutputs()
+        {
+            return GetOutputs(0);
+        }
+
         public override void Pulse(params Signal[] inputs)
         {
             PulseOutput(0, inputs[0]);
+        }
+
+        public override Node Clone()
+        {
+            return new SocketNode();
         }
     }
 
@@ -63,6 +90,11 @@ namespace FlowScriptPrototype
         public override void Pulse(params Signal[] inputs)
         {
             PulseOutput(0, Value);
+        }
+
+        public override Node Clone()
+        {
+            return new ConstNode(Value);
         }
     }
 
@@ -82,6 +114,11 @@ namespace FlowScriptPrototype
         {
             PulseOutput(0, inputs[0].Add(inputs[1]));
         }
+
+        public override Node Clone()
+        {
+            return new AddNode();
+        }
     }
 
     class SubtractNode : BinaryNode
@@ -89,6 +126,11 @@ namespace FlowScriptPrototype
         public override void Pulse(params Signal[] inputs)
         {
             PulseOutput(0, inputs[0].Subtract(inputs[1]));
+        }
+
+        public override Node Clone()
+        {
+            return new SubtractNode();
         }
     }
 
@@ -122,6 +164,11 @@ namespace FlowScriptPrototype
         {
             return inputs[0].GreaterThan(inputs[1]);
         }
+
+        public override Node Clone()
+        {
+            return new GreaterThanNode();
+        }
     }
 
     class GreaterThanOrEqualToNode : BinaryPredicateNode
@@ -129,6 +176,11 @@ namespace FlowScriptPrototype
         protected override bool Evaluate(params Signal[] inputs)
         {
             return !inputs[0].LessThan(inputs[1]);
+        }
+
+        public override Node Clone()
+        {
+            return new GreaterThanOrEqualToNode();
         }
     }
 
@@ -138,6 +190,11 @@ namespace FlowScriptPrototype
         {
             return inputs[0].LessThan(inputs[1]);
         }
+
+        public override Node Clone()
+        {
+            return new LessThanNode();
+        }
     }
 
     class LessThanOrEqualToNode : BinaryPredicateNode
@@ -146,34 +203,10 @@ namespace FlowScriptPrototype
         {
             return !inputs[0].GreaterThan(inputs[1]);
         }
-    }
 
-    class SetNode : SocketNode
-    {
-        public override void Pulse(params Signal[] inputs)
+        public override Node Clone()
         {
-            PulseOutput(0, new SetSignal(inputs[0]));
-        }
-    }
-
-    class VariableNode : SocketNode
-    {
-        public Signal Value { get; private set; }
-
-        public VariableNode(Signal initialValue = null)
-        {
-            Value = initialValue ?? new IntSignal(0);
-        }
-
-        public override void Pulse(params Signal[] inputs)
-        {
-            var input = inputs[0];
-
-            if (input is SetSignal) {
-                Value = ((SetSignal) input).Value;
-            }
-
-            PulseOutput(0, Value);
+            return new LessThanOrEqualToNode();
         }
     }
 
@@ -184,6 +217,11 @@ namespace FlowScriptPrototype
             Console.WriteLine(inputs[0].ToString());
 
             base.Pulse(inputs);
+        }
+
+        public override Node Clone()
+        {
+            return new PrintNode();
         }
     }
 }

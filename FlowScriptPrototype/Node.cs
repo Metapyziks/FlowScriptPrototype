@@ -15,9 +15,23 @@ namespace FlowScriptPrototype
             Index = index;
         }
 
-        public void ConnectToInput(Socket input)
+        public Socket ConnectToInput(Socket input)
         {
             Node.ConnectToInput(Index, input);
+
+            return this;
+        }
+
+        public Socket ClearOutputs()
+        {
+            Node.ClearOutputs(Index);
+
+            return this;
+        }
+
+        public IEnumerable<Socket> GetOutputs()
+        {
+            return Node.GetOutputs(Index);
         }
 
         public void PulseInput(Signal signal)
@@ -54,6 +68,8 @@ namespace FlowScriptPrototype
         private Signal[] _inputs;
         protected bool _toPulse;
 
+        public virtual bool Active { get { return _toPulse; } }
+
         public int InputCount { get; private set; }
         public int OutputCount { get; private set; }
 
@@ -69,6 +85,10 @@ namespace FlowScriptPrototype
 
         public abstract Node ConnectToInput(int index, Socket input);
 
+        public abstract Node ClearOutputs(int index);
+
+        public abstract IEnumerable<Socket> GetOutputs(int index);
+
         public abstract void Pulse(params Signal[] inputs);
 
         public void PulseInput(int index, Signal signal)
@@ -80,5 +100,7 @@ namespace FlowScriptPrototype
                 _sToPulse.Add(this);
             }
         }
+
+        public abstract Node Clone();
     }
 }

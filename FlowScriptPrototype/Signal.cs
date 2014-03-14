@@ -48,26 +48,6 @@ namespace FlowScriptPrototype
         }
     }
 
-    class SetSignal : NaNSignal
-    {
-        public Signal Value { get; set; }
-
-        public SetSignal(Signal value)
-        {
-            Value = value;
-        }
-
-        public override bool EqualTo(Signal other)
-        {
-            return other is SetSignal && Value.EqualTo(((SetSignal) other).Value);
-        }
-
-        public override string ToString()
-        {
-            return String.Format("Set({0})", Value.ToString());
-        }
-    }
-
     class StringSignal : NaNSignal
     {
         public String Value { get; set; }
