@@ -9,16 +9,38 @@ namespace FlowScriptPrototype
         private static Dictionary<String, Dictionary<String, PrototypeNode>> _prototypes =
             new Dictionary<string, Dictionary<string, PrototypeNode>>();
 
+        private static Dictionary<PrototypeNode, Stack<PrototypeNode>> _recycledInstances =
+            new Dictionary<PrototypeNode, Stack<PrototypeNode>>();
+
+        private static List<ReferenceNode> _watchedReferences = new List<ReferenceNode>();
+        
         public static void CreatePrototype(String category, String identifier, int inputs, int outputs, Action<PrototypeNode> constructor)
         {
             if (!_prototypes.ContainsKey(category)) {
                 _prototypes.Add(category, new Dictionary<string, PrototypeNode>());
             }
 
-            var node = new PrototypeNode(inputs, outputs);
+            var node = new PrototypeNode(category, identifier, inputs, outputs);
             _prototypes[category].Add(identifier, node);
 
+            _recycledInstances.Add(node, new Stack<PrototypeNode>());
+
             constructor(node);
+        }
+
+        public static void CollectGarbage()
+        {
+            var inactive = _watchedReferences.Where(x => !x.Active).ToArray();
+
+            foreach (var reference in inactive) {
+                _recycledInstances[reference.Prototype].Push(reference.Recycle());
+                _watchedReferences.Remove(reference);
+            }
+        }
+
+        protected static void WatchReference(ReferenceNode node)
+        {
+            _watchedReferences.Add(node);
         }
 
         public static IEnumerable<String> Categories { get { return _prototypes.Keys; } }
@@ -28,9 +50,20 @@ namespace FlowScriptPrototype
             return _prototypes[category].Keys;
         }
 
-        public static ReferenceNode GetInstance(String category, String identifier)
+        public static ReferenceNode GetReference(String category, String identifier)
         {
             return new ReferenceNode(_prototypes[category][identifier]);
+        }
+
+        public static PrototypeNode GetInstance(PrototypeNode prototype)
+        {
+            var recycled = _recycledInstances[prototype];
+
+            if (recycled.Count > 0) {
+                return recycled.Pop();
+            } else {
+                return (PrototypeNode) prototype.Clone();
+            }
         }
 
         protected CustomNode(int inputs, int outputs)
@@ -39,17 +72,17 @@ namespace FlowScriptPrototype
 
     class ReferenceNode : CustomNode
     {
-        private PrototypeNode _prototype;
         private PrototypeNode _instance;
-
         private HashSet<Socket>[] _outputs;
 
-        public override bool Active { get { return _instance != null && _instance.Active; } }
+        public PrototypeNode Prototype { get; private set; }
+
+        public override bool Active { get { return base.Active || (_instance != null && _instance.Active); } }
 
         internal ReferenceNode(PrototypeNode prototype)
             : base(prototype.InputCount, prototype.OutputCount)
         {
-            _prototype = prototype;
+            Prototype = prototype;
             _instance = null;
 
             _outputs = new HashSet<Socket>[prototype.OutputCount];
@@ -59,14 +92,25 @@ namespace FlowScriptPrototype
             }
         }
 
+        internal PrototypeNode Recycle()
+        {
+            for (int i = 0; i < OutputCount; ++i) {
+                _instance.GetOutput(i).ClearOutputs();
+            }
+
+            var instance = _instance;
+            _instance = null;
+
+            return instance;
+        }
+
         public override void Pulse(params Signal[] inputs)
         {
-            if (_instance == null) {
-                _instance = (PrototypeNode) _prototype.Clone();
+            bool newRef = _instance == null;
+            if (newRef) {
+                _instance = GetInstance(Prototype);
 
                 for (int i = 0; i < OutputCount; ++i) {
-                    _instance.GetOutput(i).ClearOutputs();
-
                     foreach (var socket in GetOutputs(i)) {
                         _instance.ConnectToInput(i, socket);
                     }
@@ -74,6 +118,10 @@ namespace FlowScriptPrototype
             }
 
             _instance.Pulse(inputs);
+
+            if (newRef) {
+                WatchReference(this);
+            }
         }
 
         public override Node ConnectToInput(int index, Socket input)
@@ -95,7 +143,12 @@ namespace FlowScriptPrototype
 
         public override Node Clone()
         {
-            return new ReferenceNode(_prototype);
+            return new ReferenceNode(Prototype);
+        }
+
+        public override string ToString()
+        {
+            return Prototype.ToString();
         }
     }
 
@@ -106,11 +159,18 @@ namespace FlowScriptPrototype
         private SocketNode[] _inputs;
         private SocketNode[] _outputs;
 
-        public override bool Active { get { return base.Active || _inner.Any(x => x.Active); } }
+        public String Category { get; private set; }
+
+        public String Identifier { get; private set; }
+
+        public override bool Active { get { return base.Active || _inner.Any(x => x.Active) || _outputs.Any(x => x.Active); } }
 
         private PrototypeNode(PrototypeNode clone)
             : base(clone.InputCount, clone.OutputCount)
         {
+            Category = clone.Category;
+            Identifier = clone.Identifier;
+
             _inner = clone._inner
                 .Select(x => x.Clone())
                 .ToList();
@@ -143,10 +203,13 @@ namespace FlowScriptPrototype
             }
         }
 
-        internal PrototypeNode(int inputs, int outputs)
+        internal PrototypeNode(String category, String identifier, int inputs, int outputs)
             : base(inputs, outputs)
         {
             _inner = new List<Node>();
+
+            Category = category;
+            Identifier = identifier;
 
             SetupSockets();
         }
@@ -210,6 +273,11 @@ namespace FlowScriptPrototype
         {
             _outputs[index].ConnectToInput(input);
             return this;
+        }
+
+        public override string ToString()
+        {
+            return String.Format("{0}.{1}", Category, Identifier);
         }
     }
 }

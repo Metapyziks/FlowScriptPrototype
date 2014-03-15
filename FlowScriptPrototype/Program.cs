@@ -38,10 +38,10 @@ namespace FlowScriptPrototype
                     .ConnectToInput(node.GetOutput(1));
             });
 
-            var loop = CustomNode.GetInstance("Tools", "Loop");
+            var loop = CustomNode.GetReference("Tools", "Loop");
             var prt1 = new PrintNode();
             var prt2 = new PrintNode();
-            var incr = CustomNode.GetInstance("Tools", "Increment");
+            var incr = CustomNode.GetReference("Tools", "Increment");
             var done = new ConstNode(new StringSignal("Done!"));
 
             loop.ConnectToInput(0, prt1.Input)

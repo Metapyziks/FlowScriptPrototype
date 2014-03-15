@@ -62,6 +62,8 @@ namespace FlowScriptPrototype
                 pulsing[i].Pulse(inputs[i]);
             }
 
+            CustomNode.CollectGarbage();
+
             return _sToPulse.Count > 0;
         }
 
