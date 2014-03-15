@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace FlowScriptPrototype
 {
@@ -20,6 +21,11 @@ namespace FlowScriptPrototype
             Node.ConnectToInput(Index, input);
 
             return this;
+        }
+
+        public Socket ConnectToInput(Node node, int index)
+        {
+            return ConnectToInput(new Socket(node, index));
         }
 
         public Socket ClearOutputs()
@@ -43,6 +49,57 @@ namespace FlowScriptPrototype
     abstract class Node
     {
         private static List<Node> _sToPulse = new List<Node>();
+
+        private static Dictionary<String, Dictionary<String, NativeNode>> _sPrototypes
+            = new Dictionary<string, Dictionary<string, NativeNode>>();
+
+        static Node()
+        {
+            FindNativeNodeDefinitions(Assembly.GetExecutingAssembly());
+        }
+
+        public static void FindNativeNodeDefinitions(Assembly assembly)
+        {
+            var nodeType = typeof(NativeNode);
+
+            foreach (var type in assembly.GetTypes()) {
+                if (!nodeType.IsAssignableFrom(type)) continue;
+
+                var attrib = type.GetCustomAttribute<NodeIdentifierAttribute>();
+                if (attrib == null) continue;
+
+                if (!_sPrototypes.ContainsKey(attrib.Category)) {
+                    _sPrototypes.Add(attrib.Category, new Dictionary<string, NativeNode>());
+                }
+
+                var ctor = type.GetConstructor(new Type[0]);
+
+                if (ctor == null) continue;
+
+                _sPrototypes[attrib.Category].Add(attrib.Identifier, (NativeNode) ctor.Invoke(new Object[0]));
+            }
+        }
+
+        public static IEnumerable<String> Categories
+        {
+            get { return _sPrototypes.Keys.Union(CustomNode.CustomCategories); }
+        }
+
+        public static IEnumerable<String> GetIdentifiers(String category)
+        {
+            return _sPrototypes.ContainsKey(category)
+                ? _sPrototypes[category].Keys.Union(CustomNode.GetCustomIdentifiers(category))
+                : CustomNode.GetCustomIdentifiers(category);
+        }
+
+        public static Node GetInstance(String category, String identifier)
+        {
+            if (CustomNode.GetCustomIdentifiers(category).Contains(identifier)) {
+                return CustomNode.GetCustomReference(category, identifier);
+            } else {
+                return _sPrototypes[category][identifier].Clone();
+            }
+        }
 
         public static bool Step()
         {
@@ -86,6 +143,11 @@ namespace FlowScriptPrototype
         }
 
         public abstract Node ConnectToInput(int index, Socket input);
+
+        public Node ConnectToInput(int outputIndex, Node node, int inputIndex)
+        {
+            return ConnectToInput(outputIndex, new Socket(node, inputIndex));
+        }
 
         public abstract Node ClearOutputs(int index);
 

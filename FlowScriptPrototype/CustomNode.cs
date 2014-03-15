@@ -6,58 +6,58 @@ namespace FlowScriptPrototype
 {
     abstract class CustomNode : Node
     {
-        private static Dictionary<String, Dictionary<String, PrototypeNode>> _prototypes =
+        private static Dictionary<String, Dictionary<String, PrototypeNode>> _sPrototypes =
             new Dictionary<string, Dictionary<string, PrototypeNode>>();
 
-        private static Dictionary<PrototypeNode, Stack<PrototypeNode>> _recycledInstances =
+        private static Dictionary<PrototypeNode, Stack<PrototypeNode>> _sRecycledInstances =
             new Dictionary<PrototypeNode, Stack<PrototypeNode>>();
 
-        private static List<ReferenceNode> _watchedReferences = new List<ReferenceNode>();
+        private static List<ReferenceNode> _sWatchedReferences = new List<ReferenceNode>();
         
         public static void CreatePrototype(String category, String identifier, int inputs, int outputs, Action<PrototypeNode> constructor)
         {
-            if (!_prototypes.ContainsKey(category)) {
-                _prototypes.Add(category, new Dictionary<string, PrototypeNode>());
+            if (!_sPrototypes.ContainsKey(category)) {
+                _sPrototypes.Add(category, new Dictionary<string, PrototypeNode>());
             }
 
             var node = new PrototypeNode(category, identifier, inputs, outputs);
-            _prototypes[category].Add(identifier, node);
+            _sPrototypes[category].Add(identifier, node);
 
-            _recycledInstances.Add(node, new Stack<PrototypeNode>());
+            _sRecycledInstances.Add(node, new Stack<PrototypeNode>());
 
             constructor(node);
         }
 
         public static void CollectGarbage()
         {
-            var inactive = _watchedReferences.Where(x => !x.Active).ToArray();
+            var inactive = _sWatchedReferences.Where(x => !x.Active).ToArray();
 
             foreach (var reference in inactive) {
-                _recycledInstances[reference.Prototype].Push(reference.Recycle());
-                _watchedReferences.Remove(reference);
+                _sRecycledInstances[reference.Prototype].Push(reference.Recycle());
+                _sWatchedReferences.Remove(reference);
             }
         }
 
         protected static void WatchReference(ReferenceNode node)
         {
-            _watchedReferences.Add(node);
+            _sWatchedReferences.Add(node);
         }
 
-        public static IEnumerable<String> Categories { get { return _prototypes.Keys; } }
+        public static IEnumerable<String> CustomCategories { get { return _sPrototypes.Keys; } }
 
-        public static IEnumerable<String> GetIdentifiers(String category)
+        public static IEnumerable<String> GetCustomIdentifiers(String category)
         {
-            return _prototypes[category].Keys;
+            return _sPrototypes.ContainsKey(category) ? _sPrototypes[category].Keys : Enumerable.Empty<String>();
         }
 
-        public static ReferenceNode GetReference(String category, String identifier)
+        public static ReferenceNode GetCustomReference(String category, String identifier)
         {
-            return new ReferenceNode(_prototypes[category][identifier]);
+            return new ReferenceNode(_sPrototypes[category][identifier]);
         }
 
-        public static PrototypeNode GetInstance(PrototypeNode prototype)
+        public static PrototypeNode GetCustomInstance(PrototypeNode prototype)
         {
-            var recycled = _recycledInstances[prototype];
+            var recycled = _sRecycledInstances[prototype];
 
             if (recycled.Count > 0) {
                 return recycled.Pop();
@@ -108,7 +108,7 @@ namespace FlowScriptPrototype
         {
             bool newRef = _instance == null;
             if (newRef) {
-                _instance = GetInstance(Prototype);
+                _instance = GetCustomInstance(Prototype);
 
                 for (int i = 0; i < OutputCount; ++i) {
                     foreach (var socket in GetOutputs(i)) {
@@ -249,9 +249,17 @@ namespace FlowScriptPrototype
             return this;
         }
 
-        public T Add<T>(T node)
-            where T : Node
+        public ConstNode AddConstant(Signal constant)
         {
+            var node = new ConstNode(constant);
+            _inner.Add(node);
+
+            return node;
+        }
+
+        public Node AddNode(String category, String identifier)
+        {
+            var node = Node.GetInstance(category, identifier);
             _inner.Add(node);
 
             return node;

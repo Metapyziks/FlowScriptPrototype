@@ -3,6 +3,19 @@ using System.Collections.Generic;
 
 namespace FlowScriptPrototype
 {
+    class NodeIdentifierAttribute : Attribute
+    {
+        public String Category { get; private set; }
+
+        public String Identifier { get; private set; }
+
+        public NodeIdentifierAttribute(String category, String identifier)
+        {
+            Category = category;
+            Identifier = identifier;
+        }
+    }
+
     abstract class NativeNode : Node
     {
         private HashSet<Socket>[] _outputs;
@@ -42,6 +55,7 @@ namespace FlowScriptPrototype
         }
     }
 
+    [NodeIdentifier("Utils", "Socket")]
     class SocketNode : NativeNode
     {
         public Socket Input { get { return new Socket(this, 0); } }
@@ -108,6 +122,7 @@ namespace FlowScriptPrototype
         protected BinaryNode() : base(2, 1) { }
     }
 
+    [NodeIdentifier("Math", "Add")]
     class AddNode : BinaryNode
     {
         public override void Pulse(params Signal[] inputs)
@@ -121,6 +136,7 @@ namespace FlowScriptPrototype
         }
     }
 
+    [NodeIdentifier("Math", "Subtract")]
     class SubtractNode : BinaryNode
     {
         public override void Pulse(params Signal[] inputs)
@@ -158,6 +174,7 @@ namespace FlowScriptPrototype
         protected BinaryPredicateNode() : base(2) { }
     }
 
+    [NodeIdentifier("Math", "GreaterThan")]
     class GreaterThanNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -171,6 +188,7 @@ namespace FlowScriptPrototype
         }
     }
 
+    [NodeIdentifier("Math", "GreaterThanOrEqual")]
     class GreaterThanOrEqualToNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -184,6 +202,7 @@ namespace FlowScriptPrototype
         }
     }
 
+    [NodeIdentifier("Math", "LessThan")]
     class LessThanNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -197,6 +216,7 @@ namespace FlowScriptPrototype
         }
     }
 
+    [NodeIdentifier("Math", "LessThanOrEqual")]
     class LessThanOrEqualToNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -210,7 +230,8 @@ namespace FlowScriptPrototype
         }
     }
 
-    class PrintNode : SocketNode
+    [NodeIdentifier("Utils", "PrintLine")]
+    class PrintLineNode : SocketNode
     {
         public override void Pulse(params Signal[] inputs)
         {
@@ -221,7 +242,7 @@ namespace FlowScriptPrototype
 
         public override Node Clone()
         {
-            return new PrintNode();
+            return new PrintLineNode();
         }
     }
 }
