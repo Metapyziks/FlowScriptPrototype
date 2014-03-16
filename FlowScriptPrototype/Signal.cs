@@ -8,6 +8,12 @@ namespace FlowScriptPrototype
 
         public abstract Signal Subtract(Signal other);
 
+        public abstract Signal Multiply(Signal other);
+
+        public abstract Signal Divide(Signal other);
+
+        public abstract Signal Modulo(Signal other);
+
         public abstract bool EqualTo(Signal other);
 
         public abstract bool GreaterThan(Signal other);
@@ -23,6 +29,21 @@ namespace FlowScriptPrototype
         }
 
         public override Signal Subtract(Signal other)
+        {
+            return new NaNSignal();
+        }
+
+        public override Signal Multiply(Signal other)
+        {
+            return new NaNSignal();
+        }
+
+        public override Signal Divide(Signal other)
+        {
+            return new NaNSignal();
+        }
+
+        public override Signal Modulo(Signal other)
         {
             return new NaNSignal();
         }
@@ -95,6 +116,33 @@ namespace FlowScriptPrototype
         {
             if (other is IntSignal) {
                 return new IntSignal(Value - ((IntSignal) other).Value);
+            } else {
+                return new NaNSignal();
+            }
+        }
+
+        public override Signal Multiply(Signal other)
+        {
+            if (other is IntSignal) {
+                return new IntSignal(Value * ((IntSignal) other).Value);
+            } else {
+                return new NaNSignal();
+            }
+        }
+
+        public override Signal Divide(Signal other)
+        {
+            if (other is IntSignal) {
+                return new IntSignal(Value / ((IntSignal) other).Value);
+            } else {
+                return new NaNSignal();
+            }
+        }
+
+        public override Signal Modulo(Signal other)
+        {
+            if (other is IntSignal) {
+                return new IntSignal(Value % ((IntSignal) other).Value);
             } else {
                 return new NaNSignal();
             }

@@ -304,6 +304,8 @@ namespace FlowScriptPrototype
                     Prototype.RemoveNode(node);
                     _selection.Remove(node);
                 }
+
+                _viewPanel.Invalidate();
             }
         }
     }

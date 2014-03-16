@@ -291,11 +291,7 @@ namespace FlowScriptPrototype
         public void RemoveNode(PlacedNode node)
         {
             _inner.Remove(node);
-
-            for (int i = 0; i < node.OutputCount; ++i) {
-                node.ClearOutputs(i);
-            }
-
+            
             foreach (var other in _inner.Union(_inputs)) {
                 for (int i = 0; i < other.OutputCount; ++i) {
                     var outputs = other.GetOutputs(i).ToArray();

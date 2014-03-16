@@ -171,6 +171,48 @@ namespace FlowScriptPrototype
         }
     }
 
+    [NativeNodeInfo("Math", "Multiply", "*")]
+    class MultiplyNode : BinaryNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            PulseOutput(0, inputs[0].Multiply(inputs[1]));
+        }
+
+        public override Node Clone()
+        {
+            return new MultiplyNode();
+        }
+    }
+
+    [NativeNodeInfo("Math", "Divide", "/")]
+    class DivideNode : BinaryNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            PulseOutput(0, inputs[0].Divide(inputs[1]));
+        }
+
+        public override Node Clone()
+        {
+            return new DivideNode();
+        }
+    }
+
+    [NativeNodeInfo("Math", "Modulo", "%")]
+    class ModuloNode : BinaryNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            PulseOutput(0, inputs[0].Modulo(inputs[1]));
+        }
+
+        public override Node Clone()
+        {
+            return new ModuloNode();
+        }
+    }
+
     abstract class PredicateNode : NativeNode
     {
         public Socket OutputPositive { get { return new Socket(this, 0); } }
