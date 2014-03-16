@@ -164,6 +164,8 @@ namespace FlowScriptPrototype
         private SocketNode[] _inputs;
         private SocketNode[] _outputs;
 
+        public IEnumerable<PlacedNode> InnerNodes { get { return _inner.OfType<PlacedNode>(); } }
+
         public String Category { get; private set; }
 
         public String Identifier { get; private set; }
@@ -254,17 +256,17 @@ namespace FlowScriptPrototype
             return this;
         }
 
-        public Node AddConstant(Signal constant)
+        public PlacedNode AddConstant(Signal constant)
         {
-            var node = new ConstNode(constant);
+            var node = new PlacedNode(new ConstNode(constant));
             _inner.Add(node);
 
             return node;
         }
 
-        public Node AddNode(String category, String identifier)
+        public PlacedNode AddNode(String category, String identifier)
         {
-            var node = Node.GetInstance(category, identifier);
+            var node = new PlacedNode(Node.GetInstance(category, identifier));
             _inner.Add(node);
 
             return node;

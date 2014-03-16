@@ -1,4 +1,5 @@
-﻿namespace FlowScriptPrototype
+﻿using System.Drawing;
+namespace FlowScriptPrototype
 {
     partial class EditorForm
     {
@@ -28,7 +29,7 @@
         private void InitializeComponent()
         {
             this._nodeMenu = new System.Windows.Forms.MenuStrip();
-            this._viewPanel = new System.Windows.Forms.Panel();
+            this._viewPanel = new EditorPanel();
             this.SuspendLayout();
             // 
             // _nodeMenu
@@ -37,17 +38,20 @@
             this._nodeMenu.Name = "_nodeMenu";
             this._nodeMenu.Size = new System.Drawing.Size(800, 24);
             this._nodeMenu.TabIndex = 0;
-            this._nodeMenu.Text = "menuStrip1";
+            this._nodeMenu.Text = "_nodeMenu";
             // 
             // _viewPanel
             // 
-            this._viewPanel.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this._viewPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this._viewPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this._viewPanel.Location = new System.Drawing.Point(0, 24);
             this._viewPanel.Margin = new System.Windows.Forms.Padding(0);
             this._viewPanel.Name = "_viewPanel";
             this._viewPanel.Size = new System.Drawing.Size(800, 576);
             this._viewPanel.TabIndex = 1;
+            this._viewPanel.Paint += new System.Windows.Forms.PaintEventHandler(this._viewPanel_Paint);
+            this._viewPanel.MouseMove += new System.Windows.Forms.MouseEventHandler(this._viewPanel_MouseMove);
+            this._viewPanel.MouseUp += new System.Windows.Forms.MouseEventHandler(this._viewPanel_MouseUp);
             // 
             // EditorForm
             // 
@@ -67,6 +71,6 @@
         #endregion
 
         private System.Windows.Forms.MenuStrip _nodeMenu;
-        private System.Windows.Forms.Panel _viewPanel;
+        private EditorPanel _viewPanel;
     }
 }
