@@ -10,41 +10,51 @@ using System.Windows.Forms;
 
 namespace FlowScriptPrototype
 {
-    public partial class NewCategoryForm : Form
+    public partial class NewNodeForm : Form
     {
-        public String CategoryName
+        public String NodeIdentifier
         {
-            get { return _catNameTextBox.Text ?? ""; }
+            get { return _nodeNameTextBox.Text ?? ""; }
         }
 
-        public bool IsCategoryValid
+        public int NodeInputCount
+        {
+            get { return (int) _inputCountNUD.Value; }
+        }
+
+        public int NodeOutputCount
+        {
+            get { return (int) _outputCountNUD.Value; }
+        }
+
+        public bool IsIdentifierValid
         {
             get
             {
-                return CategoryName.Length > 0;
+                return NodeIdentifier.Length > 0;
             }
         }
-        
-        public NewCategoryForm()
+
+        public NewNodeForm()
         {
             InitializeComponent();
         }
 
         protected override void OnLoad(EventArgs e)
         {
-            _addCatBtn.Enabled = false;
+            _addNodeBtn.Enabled = false;
 
             CenterToParent();
         }
 
-        private void _catNameTextBox_TextChanged(object sender, EventArgs e)
+        private void _nodeNameTextBox_TextChanged(object sender, EventArgs e)
         {
-            _addCatBtn.Enabled = IsCategoryValid;
+            _addNodeBtn.Enabled = IsIdentifierValid;
         }
 
-        private void _addCatBtn_Click(object sender, EventArgs e)
+        private void _addNodeBtn_Click(object sender, EventArgs e)
         {
-            if (IsCategoryValid) {
+            if (IsIdentifierValid) {
                 DialogResult = DialogResult.OK;
                 Close();
             }

@@ -34,14 +34,27 @@ namespace FlowScriptPrototype
                     item.DropDownItems.Add(identifier);
                 }
 
-                var newItem = item.DropDownItems.Add("New...");
+                item.DropDownItems.Add("New...").Click += (sender, e) => {
+                    var dialog = new NewNodeForm();
+                    var result = dialog.ShowDialog();
+
+                    if (result == DialogResult.OK) {
+                        CustomNode.CreatePrototype(category,
+                            dialog.NodeIdentifier,
+                            dialog.NodeInputCount,
+                            dialog.NodeOutputCount, node => {
+                                var form = new EditorForm(node);
+                                form.Show();
+                            });
+
+                        UpdateNodeMenu();
+                    }
+                };
                 
                 _nodeMenu.Items.Add(item);
             }
 
-            var addNewItem = _nodeMenu.Items.Add("New...");
-
-            addNewItem.Click += (sender, e) => {
+            _nodeMenu.Items.Add("New...").Click += (sender, e) => {
                 var dialog = new NewCategoryForm();
                 var result = dialog.ShowDialog();
 
