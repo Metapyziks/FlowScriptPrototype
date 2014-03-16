@@ -12,6 +12,8 @@ namespace FlowScriptPrototype
 {
     public partial class EditorForm : Form
     {
+        private static List<EditorForm> _sOpenForms = new List<EditorForm>();
+
         private List<PlacedNode> _selection;
         private bool _dragging;
         private Point _dragStart;
@@ -31,6 +33,13 @@ namespace FlowScriptPrototype
             KeyPreview = true;
             
             Text = Prototype.ToString();
+
+            _sOpenForms.Add(this);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _sOpenForms.Remove(this);
         }
 
         private bool IsSelected(PlacedNode node)
@@ -103,27 +112,31 @@ namespace FlowScriptPrototype
                 while (Node.Step());
             };
 
+            _nodeMenu.Items.Add("Constant").Click += (sender, e) => {
+                var dialog = new PlaceConstantForm();
+                var result = dialog.ShowDialog();
+
+                if (result == DialogResult.OK) {
+                    var node = Prototype.AddConstant(dialog.ConstValue);
+                    node.Offset(_viewPanel.PointToClient(Cursor.Position));
+                    node.Offset(-node.Size.Width / 2, -node.Size.Height / 2);
+
+                    ClearSelection();
+                    SelectNode(node);
+
+                    _viewPanel.Invalidate();
+                }
+            };
+
             foreach (var category in Node.Categories) {
                 var item = new ToolStripMenuItem(category);
 
-                item.DropDownItems.Add("Constant").Click += (sender, e) => {
-                    var dialog = new PlaceConstantForm();
-                    var result = dialog.ShowDialog();
-
-                    if (result == DialogResult.OK) {
-                        var node = Prototype.AddConstant(dialog.ConstValue);
-                        node.Offset(_viewPanel.PointToClient(Cursor.Position));
-                        node.Offset(-node.Size.Width / 2, -node.Size.Height / 2);
-
-                        ClearSelection();
-                        SelectNode(node);
-
-                        _viewPanel.Invalidate();
-                    }
-                };
-
                 foreach (var identifier in Node.GetIdentifiers(category)) {
-                    item.DropDownItems.Add(identifier).MouseDown += (sender, e) => {
+                    var nodeItem = item.DropDownItems.Add(identifier);
+                    
+                    nodeItem.MouseDown += (sender, e) => {
+                        if (e.Button != MouseButtons.Left) return;
+
                         var node = Prototype.AddNode(category, identifier);
                         node.Offset(_viewPanel.PointToClient(Cursor.Position));
                         node.Offset(-node.Size.Width / 2, -node.Size.Height / 2);
@@ -135,6 +148,26 @@ namespace FlowScriptPrototype
                         item.HideDropDown();
                         _viewPanel.Invalidate();
                     };
+
+                    var inst = Node.GetInstance(category, identifier);
+
+                    if (inst is ReferenceNode) {
+                        nodeItem.MouseUp += (sender, e) => {
+                            if (e.Button != MouseButtons.Right) return;
+
+                            var form = _sOpenForms.FirstOrDefault(x =>
+                                x.Prototype.Category == category &&
+                                x.Prototype.Identifier == identifier);
+
+                            if (form != null) {
+                                form.BringToFront();
+                                form.Focus();
+                            } else {
+                                form = new EditorForm(((ReferenceNode) inst).Prototype);
+                                form.Show();
+                            }
+                        };
+                    }
                 }
 
                 item.DropDownItems.Add("New...").Click += (sender, e) => {
