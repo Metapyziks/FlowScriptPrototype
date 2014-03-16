@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace FlowScriptPrototype
 {
-    abstract class CustomNode : Node
+    public abstract class CustomNode : Node
     {
         private static Dictionary<String, Dictionary<String, PrototypeNode>> _sPrototypes =
             new Dictionary<string, Dictionary<string, PrototypeNode>>();
@@ -28,6 +28,11 @@ namespace FlowScriptPrototype
             constructor(node);
         }
 
+        public static void CreateCategory(String category)
+        {
+            _sPrototypes.Add(category, new Dictionary<string, PrototypeNode>());
+        }
+
         public static void CollectGarbage()
         {
             var inactive = _sWatchedReferences.Where(x => !x.Active).ToArray();
@@ -38,24 +43,24 @@ namespace FlowScriptPrototype
             }
         }
 
-        protected static void WatchReference(ReferenceNode node)
+        internal static void WatchReference(ReferenceNode node)
         {
             _sWatchedReferences.Add(node);
         }
 
-        public static IEnumerable<String> CustomCategories { get { return _sPrototypes.Keys; } }
+        internal static IEnumerable<String> CustomCategories { get { return _sPrototypes.Keys; } }
 
-        public static IEnumerable<String> GetCustomIdentifiers(String category)
+        internal static IEnumerable<String> GetCustomIdentifiers(String category)
         {
             return _sPrototypes.ContainsKey(category) ? _sPrototypes[category].Keys : Enumerable.Empty<String>();
         }
 
-        public static ReferenceNode GetCustomReference(String category, String identifier)
+        internal static ReferenceNode GetCustomReference(String category, String identifier)
         {
             return new ReferenceNode(_sPrototypes[category][identifier]);
         }
 
-        public static PrototypeNode GetCustomInstance(PrototypeNode prototype)
+        internal static PrototypeNode GetCustomInstance(PrototypeNode prototype)
         {
             var recycled = _sRecycledInstances[prototype];
 
@@ -70,7 +75,7 @@ namespace FlowScriptPrototype
             : base(inputs, outputs) { }
     }
 
-    class ReferenceNode : CustomNode
+    internal class ReferenceNode : CustomNode
     {
         private PrototypeNode _instance;
         private HashSet<Socket>[] _outputs;
@@ -152,7 +157,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    class PrototypeNode : CustomNode
+    public class PrototypeNode : CustomNode
     {
         private List<Node> _inner;
 
@@ -249,7 +254,7 @@ namespace FlowScriptPrototype
             return this;
         }
 
-        public ConstNode AddConstant(Signal constant)
+        public Node AddConstant(Signal constant)
         {
             var node = new ConstNode(constant);
             _inner.Add(node);

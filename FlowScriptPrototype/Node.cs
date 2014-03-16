@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace FlowScriptPrototype
 {
-    struct Socket
+    public struct Socket
     {
         public readonly Node Node;
         public readonly int Index;
@@ -46,7 +46,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    abstract class Node
+    public abstract class Node
     {
         private static List<Node> _sToPulse = new List<Node>();
 
@@ -65,7 +65,7 @@ namespace FlowScriptPrototype
             foreach (var type in assembly.GetTypes()) {
                 if (!nodeType.IsAssignableFrom(type)) continue;
 
-                var attrib = type.GetCustomAttribute<NodeIdentifierAttribute>();
+                var attrib = type.GetCustomAttribute<NativeNodeInfoAttribute>();
                 if (attrib == null) continue;
 
                 if (!_sPrototypes.ContainsKey(attrib.Category)) {

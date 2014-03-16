@@ -3,16 +3,20 @@ using System.Collections.Generic;
 
 namespace FlowScriptPrototype
 {
-    class NodeIdentifierAttribute : Attribute
+    class NativeNodeInfoAttribute : Attribute
     {
         public String Category { get; private set; }
 
         public String Identifier { get; private set; }
 
-        public NodeIdentifierAttribute(String category, String identifier)
+        public String Symbol { get; private set; }
+
+        public NativeNodeInfoAttribute(String category, String identifier, String symbol = null)
         {
             Category = category;
             Identifier = identifier;
+
+            Symbol = symbol ?? Identifier;
         }
     }
 
@@ -55,7 +59,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    [NodeIdentifier("Utils", "Socket")]
+    [NativeNodeInfo("Utils", "Socket")]
     class SocketNode : NativeNode
     {
         public Socket Input { get { return new Socket(this, 0); } }
@@ -122,7 +126,7 @@ namespace FlowScriptPrototype
         protected BinaryNode() : base(2, 1) { }
     }
 
-    [NodeIdentifier("Math", "Add")]
+    [NativeNodeInfo("Math", "Add", "+")]
     class AddNode : BinaryNode
     {
         public override void Pulse(params Signal[] inputs)
@@ -136,7 +140,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    [NodeIdentifier("Math", "Subtract")]
+    [NativeNodeInfo("Math", "Subtract", "-")]
     class SubtractNode : BinaryNode
     {
         public override void Pulse(params Signal[] inputs)
@@ -174,7 +178,7 @@ namespace FlowScriptPrototype
         protected BinaryPredicateNode() : base(2) { }
     }
 
-    [NodeIdentifier("Math", "GreaterThan")]
+    [NativeNodeInfo("Math", "GreaterThan", ">")]
     class GreaterThanNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -188,7 +192,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    [NodeIdentifier("Math", "GreaterThanOrEqual")]
+    [NativeNodeInfo("Math", "GreaterThanOrEqual", ">=")]
     class GreaterThanOrEqualToNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -202,7 +206,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    [NodeIdentifier("Math", "LessThan")]
+    [NativeNodeInfo("Math", "LessThan", "<")]
     class LessThanNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -216,7 +220,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    [NodeIdentifier("Math", "LessThanOrEqual")]
+    [NativeNodeInfo("Math", "LessThanOrEqual", "<=")]
     class LessThanOrEqualToNode : BinaryPredicateNode
     {
         protected override bool Evaluate(params Signal[] inputs)
@@ -230,7 +234,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    [NodeIdentifier("Utils", "PrintLine")]
+    [NativeNodeInfo("Utils", "PrintLine")]
     class PrintLineNode : SocketNode
     {
         public override void Pulse(params Signal[] inputs)

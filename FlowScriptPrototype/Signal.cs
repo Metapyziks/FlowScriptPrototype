@@ -2,7 +2,7 @@
 
 namespace FlowScriptPrototype
 {
-    abstract class Signal
+    public abstract class Signal
     {
         public abstract Signal Add(Signal other);
 
@@ -15,7 +15,7 @@ namespace FlowScriptPrototype
         public abstract bool LessThan(Signal other);
     }
 
-    class NaNSignal : Signal
+    public class NaNSignal : Signal
     {
         public override Signal Add(Signal other)
         {
@@ -48,7 +48,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    class StringSignal : NaNSignal
+    public class StringSignal : NaNSignal
     {
         public String Value { get; set; }
 
@@ -68,7 +68,7 @@ namespace FlowScriptPrototype
         }
     }
 
-    class IntSignal : Signal
+    public class IntSignal : Signal
     {
         public long Value { get; set; }
 
