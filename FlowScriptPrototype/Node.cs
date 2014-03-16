@@ -10,6 +10,8 @@ namespace FlowScriptPrototype
         public readonly Node Node;
         public readonly int Index;
 
+        public bool IsNull { get { return Node == null; } }
+
         public Socket(Node node, int index)
         {
             Node = node;

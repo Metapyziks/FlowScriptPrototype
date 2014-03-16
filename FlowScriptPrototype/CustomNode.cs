@@ -288,6 +288,30 @@ namespace FlowScriptPrototype
             return node;
         }
 
+        public void RemoveNode(PlacedNode node)
+        {
+            _inner.Remove(node);
+
+            for (int i = 0; i < node.OutputCount; ++i) {
+                node.ClearOutputs(i);
+            }
+
+            foreach (var other in _inner.Union(_inputs)) {
+                for (int i = 0; i < other.OutputCount; ++i) {
+                    var outputs = other.GetOutputs(i).ToArray();
+
+                    if (outputs.Any(x => x.Node == node)) {
+                        other.ClearOutputs(i);
+
+                        foreach (var output in outputs) {
+                            if (output.Node == node) continue;
+                            other.ConnectToInput(i, output);
+                        }
+                    }
+                }
+            }
+        }
+
         public override void Pulse(params Signal[] inputs)
         {
             for (int i = 0; i < InputCount; ++i) {

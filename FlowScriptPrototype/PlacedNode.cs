@@ -14,11 +14,32 @@ namespace FlowScriptPrototype
         private static readonly Pen _sOutlinePen = new Pen(Color.FromArgb(0x68, 0x68, 0x68));
         private static readonly Brush _sFillBrush = new SolidBrush(Color.FromArgb(0x3e, 0x3e, 0x42));
         private static readonly Brush _sInOutBrush = new SolidBrush(Color.FromArgb(0x68, 0x68, 0x68));
+        private static readonly Pen _sConnectionPen = new Pen(Color.FromArgb(0x68, 0x68, 0x68), 4f);
 
         private static readonly Pen _sSelectedPen = new Pen(Color.FromArgb(0x26, 0x4F, 0x78));
+        private static readonly Pen _sSelectedConnectionPen = new Pen(Color.FromArgb(0x26, 0x4F, 0x78), 4f);
+        private static readonly Brush _sSelectedBrush = new SolidBrush(Color.FromArgb(0x26, 0x4F, 0x78));
 
         private static readonly Font _sLabelFont = new Font(FontFamily.GenericSansSerif, 12f);
         private static readonly Brush _sLabelBrush = new SolidBrush(Color.FromArgb(0xdc, 0xdc, 0xdc));
+
+        public static void DrawConnection(Graphics context, Point s, Point e)
+        {
+            DrawConnection(context, s, e, _sConnectionPen);
+        }
+
+        public static void DrawConnection(Graphics context, Point s, Point e, Pen pen)
+        {
+            var offset = Math.Max(16, Math.Abs(s.X - e.X) / 2);
+
+            context.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            context.DrawBezier(pen,
+                s.X, s.Y,
+                s.X + offset, s.Y,
+                e.X - offset, e.Y,
+                e.X, e.Y);
+            context.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
+        }
 
         private Node _instance;
 
@@ -85,22 +106,48 @@ namespace FlowScriptPrototype
             return _instance.Clone();
         }
 
-        public void Draw(Graphics context, bool selected)
+        public Point GetInputLocation(int index)
         {
+            return new Point(Bounds.Left, Bounds.Top + 16 + 24 * index);
+        }
+
+        public Point GetOutputLocation(int index)
+        {
+            return new Point(Bounds.Right, Bounds.Top + 16 + 24 * index);
+        }
+
+        public void Draw(Graphics context, bool selected, Socket selectedOutput)
+        {
+            context.FillRectangle(_sFillBrush, Bounds);
+            context.DrawRectangle(selected ? _sSelectedPen : _sOutlinePen, Bounds);
+
             if (!IsInput) {
                 for (int i = 0; i < InputCount; ++i) {
-                    context.FillRectangle(_sInOutBrush, Bounds.Left - 2, Bounds.Top + 12 + 24 * i, 4, 8);
+                    var loc = GetInputLocation(i);
+                    context.FillRectangle(_sInOutBrush, loc.X - 2, loc.Y - 4, 4, 8);
                 }
             }
 
             if (!IsOutput) {
                 for (int i = 0; i < OutputCount; ++i) {
-                    context.FillRectangle(_sInOutBrush, Bounds.Right - 1, Bounds.Top + 12 + 24 * i, 4, 8);
+                    var loc = GetOutputLocation(i);
+
+                    foreach (var socket in _instance.GetOutputs(i)) {
+                        var other = socket.Node as PlacedNode;
+
+                        if (other == null) continue;
+
+                        DrawConnection(context, loc, other.GetInputLocation(socket.Index),
+                            selected ? _sSelectedConnectionPen : _sConnectionPen);
+                    }
+
+                    if (selectedOutput.Node == this && selectedOutput.Index == i) {
+                        context.FillRectangle(_sSelectedBrush, loc.X - 1, loc.Y - 6, 4, 12);
+                    } else {
+                        context.FillRectangle(_sInOutBrush, loc.X - 1, loc.Y - 4, 4, 8);
+                    }
                 }
             }
-
-            context.FillRectangle(_sFillBrush, Bounds);
-            context.DrawRectangle(selected ? _sSelectedPen : _sOutlinePen, Bounds);
             
             var format = new StringFormat {
                 LineAlignment = StringAlignment.Center,

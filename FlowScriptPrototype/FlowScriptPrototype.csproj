@@ -67,6 +67,12 @@
       <DependentUpon>NewNodeForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Node.cs" />
+    <Compile Include="PlaceConstantForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PlaceConstantForm.Designer.cs">
+      <DependentUpon>PlaceConstantForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="PlacedNode.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -89,6 +95,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NewNodeForm.resx">
       <DependentUpon>NewNodeForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PlaceConstantForm.resx">
+      <DependentUpon>PlaceConstantForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -16,6 +16,9 @@ namespace FlowScriptPrototype
         private bool _dragging;
         private Point _dragStart;
 
+        private bool _wiring;
+        private Socket _wireStart;
+
         public PrototypeNode Prototype { get; private set; }
 
         public EditorForm(PrototypeNode prototype = null)
@@ -24,6 +27,8 @@ namespace FlowScriptPrototype
             _selection = new List<PlacedNode>();
 
             InitializeComponent();
+
+            KeyPreview = true;
             
             Text = Prototype.ToString();
         }
@@ -70,9 +75,48 @@ namespace FlowScriptPrototype
             }
         }
 
+        private void StartWiring(Socket socket)
+        {
+            if (!socket.IsNull) {
+                _wiring = true;
+                _wireStart = socket;
+            }
+        }
+
+        private void StopWiring(Socket socket)
+        {
+            if (!socket.IsNull) {
+                _wireStart.ConnectToInput(socket);
+            }
+
+            _wiring = false;
+        }
+
         private void UpdateNodeMenu()
         {
             _nodeMenu.Items.Clear();
+
+            _nodeMenu.Items.Add("Run Test").Click += (sender, e) => {
+                Prototype.PulseInput(0, new IntSignal(1));
+
+                while (Node.Step());
+            };
+
+            _nodeMenu.Items.Add("Constant").Click += (sender, e) => {
+                var dialog = new PlaceConstantForm();
+                var result = dialog.ShowDialog();
+
+                if (result == DialogResult.OK) {
+                    var node = Prototype.AddConstant(dialog.ConstValue);
+                    node.Offset(_viewPanel.PointToClient(Cursor.Position));
+                    node.Offset(-node.Size.Width / 2, -node.Size.Height / 2);
+
+                    ClearSelection();
+                    SelectNode(node);
+
+                    _viewPanel.Invalidate();
+                }
+            };
 
             foreach (var category in Node.Categories) {
                 var item = new ToolStripMenuItem(category);
@@ -140,14 +184,29 @@ namespace FlowScriptPrototype
 
             var diffSub = new Point(-diffAdd.X, -diffAdd.Y);
 
+            var output = _dragging || _wiring ? new Socket(null, 0)
+                : GetIntersectingOutput(_viewPanel.PointToClient(Cursor.Position));
+
+            if (_wiring) {
+                PlacedNode.DrawConnection(e.Graphics,
+                    ((PlacedNode) _wireStart.Node).GetOutputLocation(_wireStart.Index),
+                    _viewPanel.PointToClient(Cursor.Position));
+            }
+
+            if (_dragging) {
+                foreach (var node in Prototype.Nodes) {
+                    if (IsSelected(node)) node.Offset(diffAdd);
+                }
+            }
+
             foreach (var node in Prototype.Nodes) {
-                bool dragging = IsDragging(node);
+                node.Draw(e.Graphics, IsSelected(node), output);
+            }
 
-                if (dragging) node.Offset(diffAdd);
-
-                node.Draw(e.Graphics, IsSelected(node));
-
-                if (dragging) node.Offset(diffSub);
+            if (_dragging) {
+                foreach (var node in Prototype.Nodes) {
+                    if (IsSelected(node)) node.Offset(diffSub);
+                }
             }
         }
 
@@ -156,22 +215,56 @@ namespace FlowScriptPrototype
             return Prototype.Nodes.LastOrDefault(x => x.Bounds.Contains(pos));
         }
 
-        private void _viewPanel_MouseUp(object sender, MouseEventArgs e)
+        private Socket GetIntersectingInput(Point pos)
         {
-            if (_dragging) {
-                StopDragging();
+            foreach (var node in Prototype.Nodes) {
+                if (node.IsInput) continue;
+
+                for (int i = 0; i < node.InputCount; ++i) {
+                    var outPos = node.GetInputLocation(i);
+                    var diff = Point.Subtract(pos, new Size(outPos));
+
+                    if (diff.X * diff.X + diff.Y * diff.Y < 64) {
+                        return new Socket(node, i);
+                    }
+                }
             }
+
+            return new Socket(null, 0);
         }
 
-        private void _viewPanel_MouseMove(object sender, MouseEventArgs e)
+        private Socket GetIntersectingOutput(Point pos)
         {
-            if (_dragging) {
-                _viewPanel.Invalidate();
+            foreach (var node in Prototype.Nodes) {
+                if (node.IsOutput) continue;
+
+                for (int i = 0; i < node.OutputCount; ++i) {
+                    var outPos = node.GetOutputLocation(i);
+                    var diff = Point.Subtract(pos, new Size(outPos));
+
+                    if (diff.X * diff.X + diff.Y * diff.Y < 64) {
+                        return new Socket(node, i);
+                    }
+                }
             }
+
+            return new Socket(null, 0);
         }
 
         private void _viewPanel_MouseDown(object sender, MouseEventArgs e)
         {
+            var socket = GetIntersectingOutput(e.Location);
+
+            if (!socket.IsNull) {
+                if (e.Button == System.Windows.Forms.MouseButtons.Left) {
+                    StartWiring(socket);
+                } else if (e.Button == System.Windows.Forms.MouseButtons.Right) {
+                    socket.ClearOutputs();
+                }
+
+                return;
+            }
+
             var node = GetIntersectingNode(e.Location);
 
             if (node != null) {
@@ -186,6 +279,32 @@ namespace FlowScriptPrototype
             }
 
             _viewPanel.Invalidate();
+        }
+
+        private void _viewPanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            _viewPanel.Invalidate();
+        }
+
+        private void _viewPanel_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (_wiring) {
+                StopWiring(GetIntersectingInput(e.Location));
+            } else if (_dragging) {
+                StopDragging();
+            }
+        }
+
+        private void EditorForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) {
+                var deleted = _selection.Where(x => !x.IsInput && !x.IsOutput).ToArray();
+
+                foreach (var node in deleted) {
+                    Prototype.RemoveNode(node);
+                    _selection.Remove(node);
+                }
+            }
         }
     }
 }

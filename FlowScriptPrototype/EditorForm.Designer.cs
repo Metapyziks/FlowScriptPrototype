@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+
 namespace FlowScriptPrototype
 {
     partial class EditorForm
@@ -64,6 +65,7 @@ namespace FlowScriptPrototype
             this.MainMenuStrip = this._nodeMenu;
             this.Name = "EditorForm";
             this.Text = "EditorForm";
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.EditorForm_KeyDown);
             this.ResumeLayout(false);
             this.PerformLayout();
 

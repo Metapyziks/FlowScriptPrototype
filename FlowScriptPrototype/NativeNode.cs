@@ -124,6 +124,13 @@ namespace FlowScriptPrototype
         {
             return new ConstNode(Value);
         }
+
+        public override string ToString()
+        {
+            return Value is StringSignal
+                ? String.Format("\"{0}\"", Value.ToString())
+                : Value.ToString();
+        }
     }
 
     abstract class BinaryNode : NativeNode
