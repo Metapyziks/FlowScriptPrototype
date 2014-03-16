@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace FlowScriptPrototype
 {
@@ -56,6 +57,15 @@ namespace FlowScriptPrototype
         public override IEnumerable<Socket> GetOutputs(int index)
         {
             return _outputs[index];
+        }
+
+        public override string ToString()
+        {
+            var attrib = GetType().GetCustomAttribute<NativeNodeInfoAttribute>();
+
+            if (attrib != null) return attrib.Symbol;
+
+            return GetType().Name;
         }
     }
 

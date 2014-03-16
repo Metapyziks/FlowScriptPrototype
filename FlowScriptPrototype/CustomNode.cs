@@ -161,10 +161,18 @@ namespace FlowScriptPrototype
     {
         private List<Node> _inner;
 
-        private SocketNode[] _inputs;
-        private SocketNode[] _outputs;
+        private Node[] _inputs;
+        private Node[] _outputs;
 
-        public IEnumerable<PlacedNode> InnerNodes { get { return _inner.OfType<PlacedNode>(); } }
+        public IEnumerable<PlacedNode> Nodes
+        {
+            get
+            {
+                return _inner.OfType<PlacedNode>()
+                    .Union(_inputs.Cast<PlacedNode>())
+                    .Union(_outputs.Cast<PlacedNode>());
+            }
+        }
 
         public String Category { get; private set; }
 
@@ -182,7 +190,16 @@ namespace FlowScriptPrototype
                 .Select(x => x.Clone())
                 .ToList();
 
-            SetupSockets();
+            _inputs = new SocketNode[InputCount];
+            _outputs = new SocketNode[OutputCount];
+
+            for (int i = 0; i < InputCount; ++i) {
+                _inputs[i] = new SocketNode();
+            }
+
+            for (int i = 0; i < OutputCount; ++i) {
+                _outputs[i] = new SocketNode();
+            }
 
             Action<Node, Node> copyOutputs = (node, orig) => {
                 for (int j = 0; j < node.OutputCount; ++j) {
@@ -218,36 +235,35 @@ namespace FlowScriptPrototype
             Category = category;
             Identifier = identifier;
 
-            SetupSockets();
-        }
-
-        private void SetupSockets()
-        {
-            _inputs = new SocketNode[InputCount];
-            _outputs = new SocketNode[OutputCount];
+            _inputs = new PlacedNode[InputCount];
+            _outputs = new PlacedNode[OutputCount];
 
             for (int i = 0; i < InputCount; ++i) {
-                _inputs[i] = new SocketNode();
+                var input = new InOutPlacedNode(String.Format("In {0}", i + 1), true);
+                input.Location = new System.Drawing.Point(8, 8 + i * (input.Size.Height + 8));
+                _inputs[i] = input;
             }
 
             for (int i = 0; i < OutputCount; ++i) {
-                _outputs[i] = new SocketNode();
+                var output = new InOutPlacedNode(String.Format("Out {0}", i + 1), false);
+                output.Location = new System.Drawing.Point(16 + output.Size.Width, 8 + i * (output.Size.Height + 8));
+                _outputs[i] = output;
             }
         }
 
         public Socket GetInput(int index)
         {
-            return _inputs[index].Output;
+            return new Socket(_inputs[index], 0);
         }
 
         public Socket GetOutput(int index)
         {
-            return _outputs[index].Input;
+            return new Socket(_outputs[index], 0);
         }
 
         public override IEnumerable<Socket> GetOutputs(int index)
         {
-            return _outputs[index].GetOutputs();
+            return _outputs[index].GetOutputs(0);
         }
 
         public override Node ClearOutputs(int index)
@@ -286,7 +302,7 @@ namespace FlowScriptPrototype
 
         public override Node ConnectToInput(int index, Socket input)
         {
-            _outputs[index].ConnectToInput(input);
+            _outputs[index].ConnectToInput(0, input);
             return this;
         }
 

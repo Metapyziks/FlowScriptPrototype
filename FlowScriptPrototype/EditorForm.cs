@@ -140,7 +140,7 @@ namespace FlowScriptPrototype
 
             var diffSub = new Point(-diffAdd.X, -diffAdd.Y);
 
-            foreach (var node in Prototype.InnerNodes) {
+            foreach (var node in Prototype.Nodes) {
                 bool dragging = IsDragging(node);
 
                 if (dragging) node.Offset(diffAdd);
@@ -153,7 +153,7 @@ namespace FlowScriptPrototype
 
         private PlacedNode GetIntersectingNode(Point pos)
         {
-            return Prototype.InnerNodes.LastOrDefault(x => x.Bounds.Contains(pos));
+            return Prototype.Nodes.LastOrDefault(x => x.Bounds.Contains(pos));
         }
 
         private void _viewPanel_MouseUp(object sender, MouseEventArgs e)
