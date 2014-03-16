@@ -33,6 +33,13 @@ namespace FlowScriptPrototype
             _sPrototypes.Add(category, new Dictionary<string, PrototypeNode>());
         }
 
+        internal static void ClearRecycledInstances(PrototypeNode prototype)
+        {
+            if (_sRecycledInstances.ContainsKey(prototype)) {
+                _sRecycledInstances[prototype].Clear();
+            }
+        }
+
         public static void CollectGarbage()
         {
             var inactive = _sWatchedReferences.Where(x => !x.Active).ToArray();
@@ -249,6 +256,11 @@ namespace FlowScriptPrototype
                 output.Location = new System.Drawing.Point(16 + output.Size.Width, 8 + i * (output.Size.Height + 8));
                 _outputs[i] = output;
             }
+        }
+
+        public void ClearRecycledInstances()
+        {
+            CustomNode.ClearRecycledInstances(this);
         }
 
         public Socket GetInput(int index)

@@ -87,6 +87,7 @@ namespace FlowScriptPrototype
         {
             if (!socket.IsNull) {
                 _wireStart.ConnectToInput(socket);
+                Prototype.ClearRecycledInstances();
             }
 
             _wiring = false;
@@ -300,12 +301,15 @@ namespace FlowScriptPrototype
             if (e.KeyCode == Keys.Delete) {
                 var deleted = _selection.Where(x => !x.IsInput && !x.IsOutput).ToArray();
 
-                foreach (var node in deleted) {
-                    Prototype.RemoveNode(node);
-                    _selection.Remove(node);
-                }
+                if (deleted.Length > 0) {
+                    foreach (var node in deleted) {
+                        Prototype.RemoveNode(node);
+                        _selection.Remove(node);
+                    }
 
-                _viewPanel.Invalidate();
+                    Prototype.ClearRecycledInstances();
+                    _viewPanel.Invalidate();
+                }
             }
         }
     }
