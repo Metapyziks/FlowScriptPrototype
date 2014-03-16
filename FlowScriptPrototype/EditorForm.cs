@@ -103,24 +103,24 @@ namespace FlowScriptPrototype
                 while (Node.Step());
             };
 
-            _nodeMenu.Items.Add("Constant").Click += (sender, e) => {
-                var dialog = new PlaceConstantForm();
-                var result = dialog.ShowDialog();
-
-                if (result == DialogResult.OK) {
-                    var node = Prototype.AddConstant(dialog.ConstValue);
-                    node.Offset(_viewPanel.PointToClient(Cursor.Position));
-                    node.Offset(-node.Size.Width / 2, -node.Size.Height / 2);
-
-                    ClearSelection();
-                    SelectNode(node);
-
-                    _viewPanel.Invalidate();
-                }
-            };
-
             foreach (var category in Node.Categories) {
                 var item = new ToolStripMenuItem(category);
+
+                item.DropDownItems.Add("Constant").Click += (sender, e) => {
+                    var dialog = new PlaceConstantForm();
+                    var result = dialog.ShowDialog();
+
+                    if (result == DialogResult.OK) {
+                        var node = Prototype.AddConstant(dialog.ConstValue);
+                        node.Offset(_viewPanel.PointToClient(Cursor.Position));
+                        node.Offset(-node.Size.Width / 2, -node.Size.Height / 2);
+
+                        ClearSelection();
+                        SelectNode(node);
+
+                        _viewPanel.Invalidate();
+                    }
+                };
 
                 foreach (var identifier in Node.GetIdentifiers(category)) {
                     item.DropDownItems.Add(identifier).MouseDown += (sender, e) => {

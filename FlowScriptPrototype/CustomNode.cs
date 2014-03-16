@@ -150,7 +150,13 @@ namespace FlowScriptPrototype
 
         public override Node ClearOutputs(int index)
         {
-            throw new NotImplementedException();
+            _outputs[index].Clear();
+
+            if (_instance != null) {
+                _instance.ClearOutputs(index);
+            }
+
+            return this;
         }
 
         public override Node Clone()
