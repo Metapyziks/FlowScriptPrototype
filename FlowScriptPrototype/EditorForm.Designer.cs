@@ -29,7 +29,7 @@ namespace FlowScriptPrototype
         private void InitializeComponent()
         {
             this._nodeMenu = new System.Windows.Forms.MenuStrip();
-            this._viewPanel = new EditorPanel();
+            this._viewPanel = new FlowScriptPrototype.EditorPanel();
             this.SuspendLayout();
             // 
             // _nodeMenu
@@ -50,6 +50,7 @@ namespace FlowScriptPrototype
             this._viewPanel.Size = new System.Drawing.Size(800, 576);
             this._viewPanel.TabIndex = 1;
             this._viewPanel.Paint += new System.Windows.Forms.PaintEventHandler(this._viewPanel_Paint);
+            this._viewPanel.MouseDown += new System.Windows.Forms.MouseEventHandler(this._viewPanel_MouseDown);
             this._viewPanel.MouseMove += new System.Windows.Forms.MouseEventHandler(this._viewPanel_MouseMove);
             this._viewPanel.MouseUp += new System.Windows.Forms.MouseEventHandler(this._viewPanel_MouseUp);
             // 

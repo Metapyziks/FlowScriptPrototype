@@ -12,7 +12,8 @@ namespace FlowScriptPrototype
 {
     public partial class EditorForm : Form
     {
-        private PlacedNode[] _dragging;
+        private List<PlacedNode> _selection;
+        private bool _dragging;
         private Point _dragStart;
 
         public PrototypeNode Prototype { get; private set; }
@@ -20,35 +21,53 @@ namespace FlowScriptPrototype
         public EditorForm(PrototypeNode prototype = null)
         {
             Prototype = prototype ?? new PrototypeNode("Example", "Test", 1, 1);
+            _selection = new List<PlacedNode>();
 
             InitializeComponent();
             
             Text = Prototype.ToString();
         }
 
-        private bool IsDragging(PlacedNode node)
+        private bool IsSelected(PlacedNode node)
         {
-            return _dragging != null && _dragging.Contains(node);
+            return _selection.Contains(node);
         }
 
-        private void StartDragging(params PlacedNode[] nodes)
+        private bool IsDragging(PlacedNode node)
         {
-            _dragging = nodes;
+            return _dragging && IsSelected(node);
+        }
+
+        private void ClearSelection()
+        {
+            _selection.Clear();
+        }
+
+        private void SelectNode(params PlacedNode[] node)
+        {
+            _selection.AddRange(node);
+        }
+
+        private void StartDragging()
+        {
+            _dragging = true;
             _dragStart = Cursor.Position;
         }
 
         private void StopDragging()
         {
-            var diff = new Point(
-                Cursor.Position.X - _dragStart.X,
-                Cursor.Position.Y - _dragStart.Y);
+            if (_dragging) {
+                var diff = new Point(
+                    Cursor.Position.X - _dragStart.X,
+                    Cursor.Position.Y - _dragStart.Y);
 
-            foreach (var node in _dragging) {
-                node.Offset(diff);
+                foreach (var node in _selection) {
+                    node.Offset(diff);
+                }
+
+                _dragging = false;
+                _viewPanel.Invalidate();
             }
-
-            _dragging = null;
-            _viewPanel.Invalidate();
         }
 
         private void UpdateNodeMenu()
@@ -63,7 +82,10 @@ namespace FlowScriptPrototype
                         var node = Prototype.AddNode(category, identifier);
                         node.Offset(_viewPanel.PointToClient(Cursor.Position));
                         node.Offset(-node.Size.Width / 2, -node.Size.Height / 2);
-                        StartDragging(node);
+
+                        ClearSelection();
+                        SelectNode(node);
+                        StartDragging();
 
                         item.HideDropDown();
                         _viewPanel.Invalidate();
@@ -123,24 +145,47 @@ namespace FlowScriptPrototype
 
                 if (dragging) node.Offset(diffAdd);
 
-                node.Draw(e.Graphics);
+                node.Draw(e.Graphics, IsSelected(node));
 
                 if (dragging) node.Offset(diffSub);
             }
         }
 
+        private PlacedNode GetIntersectingNode(Point pos)
+        {
+            return Prototype.InnerNodes.LastOrDefault(x => x.Bounds.Contains(pos));
+        }
+
         private void _viewPanel_MouseUp(object sender, MouseEventArgs e)
         {
-            if (_dragging != null) {
+            if (_dragging) {
                 StopDragging();
             }
         }
 
         private void _viewPanel_MouseMove(object sender, MouseEventArgs e)
         {
-            if (_dragging != null) {
+            if (_dragging) {
                 _viewPanel.Invalidate();
             }
+        }
+
+        private void _viewPanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            var node = GetIntersectingNode(e.Location);
+
+            if (node != null) {
+                if (!IsSelected(node)) {
+                    if (!ModifierKeys.HasFlag(Keys.Shift)) ClearSelection();
+                    SelectNode(node);
+                }
+
+                StartDragging();
+            } else {
+                ClearSelection();
+            }
+
+            _viewPanel.Invalidate();
         }
     }
 }

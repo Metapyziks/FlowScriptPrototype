@@ -12,6 +12,8 @@ namespace FlowScriptPrototype
         private static readonly Pen _sOutlinePen = new Pen(Color.FromArgb(0x68, 0x68, 0x68));
         private static readonly Brush _sFillBrush = new SolidBrush(Color.FromArgb(0x3e, 0x3e, 0x42));
 
+        private static readonly Pen _sSelectedPen = new Pen(Color.FromArgb(0x26, 0x4F, 0x78));
+
         private Node _instance;
 
         public Point Location { get; set; }
@@ -67,10 +69,10 @@ namespace FlowScriptPrototype
             return _instance.Clone();
         }
 
-        public void Draw(Graphics context)
+        public void Draw(Graphics context, bool selected)
         {
             context.FillRectangle(_sFillBrush, Bounds);
-            context.DrawRectangle(_sOutlinePen, Bounds);
+            context.DrawRectangle(selected ? _sSelectedPen : _sOutlinePen, Bounds);
         }
     }
 }
