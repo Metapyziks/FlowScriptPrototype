@@ -107,7 +107,7 @@ namespace FlowScriptPrototype.Array
 
         public override Node Clone()
         {
-            return new IndexNode();
+            return new InsertNode();
         }
     }
 

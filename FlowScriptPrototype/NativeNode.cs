@@ -284,7 +284,7 @@ namespace FlowScriptPrototype
     {
         protected override bool Evaluate(params Signal[] inputs)
         {
-            return inputs[0].LessThan(inputs[1]);
+            return inputs[0].GreaterThan(inputs[1]) || inputs[0].EqualTo(inputs[1]);
         }
 
         public override Node Clone()
@@ -298,12 +298,79 @@ namespace FlowScriptPrototype
     {
         protected override bool Evaluate(params Signal[] inputs)
         {
-            return !inputs[0].GreaterThan(inputs[1]);
+            return inputs[0].LessThan(inputs[1]) || inputs[0].EqualTo(inputs[1]);
         }
 
         public override Node Clone()
         {
             return new LessThanOrEqualToNode();
+        }
+    }
+
+    [NativeNodeInfo("Math", "Sqrt")]
+    class SqrtNode : SocketNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            double val;
+
+            if (inputs[0] is IntSignal) {
+                val = ((IntSignal) inputs[0]).Value;
+            } else if (inputs[0] is RealSignal) {
+                val = ((RealSignal) inputs[0]).Value;
+            } else {
+                base.Pulse(new NaNSignal());
+                return;
+            }
+
+            if (val < 0) {
+                base.Pulse(new NaNSignal());
+            } else {
+                base.Pulse(new RealSignal(Math.Sqrt(val)));
+            }
+        }
+
+        public override Node Clone()
+        {
+            return new SqrtNode();
+        }
+    }
+
+    [NativeNodeInfo("Math", "Pow")]
+    class PowNode : BinaryNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            double a, b;
+
+            if (inputs[0] is IntSignal) {
+                a = ((IntSignal) inputs[0]).Value;
+            } else if (inputs[0] is RealSignal) {
+                a = ((RealSignal) inputs[0]).Value;
+            } else {
+                PulseOutput(0, new NaNSignal());
+                return;
+            }
+
+            if (inputs[1] is IntSignal) {
+                b = ((IntSignal) inputs[1]).Value;
+            } else if (inputs[1] is RealSignal) {
+                b = ((RealSignal) inputs[1]).Value;
+            } else {
+                PulseOutput(0, new NaNSignal());
+                return;
+            }
+
+            if ((a == 0 && b == 0) || (a < 0 && b != Math.Round(b))) {
+                PulseOutput(0, new NaNSignal());
+            } else if (inputs[0] is IntSignal && inputs[1] is IntSignal) {
+                PulseOutput(0, new IntSignal((long) Math.Pow(a, b)));
+            }
+        }
+
+        public override Node Clone()
+        {
+            return new PowNode();
         }
     }
 
