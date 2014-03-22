@@ -335,6 +335,22 @@ namespace FlowScriptPrototype
         }
     }
 
+    [NativeNodeInfo("Console", "Clear")]
+    class ClearNode : SocketNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            Console.Clear();
+
+            base.Pulse(inputs);
+        }
+
+        public override Node Clone()
+        {
+            return new ClearNode();
+        }
+    }
+
     [NativeNodeInfo("Console", "Print")]
     class PrintNode : SocketNode
     {
@@ -385,6 +401,20 @@ namespace FlowScriptPrototype
         public override Node Clone()
         {
             return new ParseIntNode();
+        }
+    }
+
+    [NativeNodeInfo("Utils", "ToString")]
+    class ToStringNode : SocketNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            base.Pulse(new StringSignal(inputs[0].ToString()));
+        }
+
+        public override Node Clone()
+        {
+            return new ToStringNode();
         }
     }
 }

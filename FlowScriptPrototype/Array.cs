@@ -24,6 +24,11 @@ namespace FlowScriptPrototype.Array
         {
             return other is ArraySignal && ((ArraySignal) other).Value == Value;
         }
+
+        public override string ToString()
+        {
+            return String.Format("[Array {0:x}]", Value.GetHashCode());
+        }
     }
 
 
@@ -72,6 +77,32 @@ namespace FlowScriptPrototype.Array
             if (index.Value < 0 || index.Value >= input.Value.Count) return;
             
             PulseOutput(0, input.Value[(int) index.Value]);
+        }
+
+        public override Node Clone()
+        {
+            return new IndexNode();
+        }
+    }
+
+    [NativeNodeInfo("Array", "Insert")]
+    class InsertNode : NativeNode
+    {
+        public InsertNode() : base(3, 1) { }
+
+        public override void Pulse(params Signal[] inputs)
+        {
+            var input = inputs[0] as ArraySignal;
+            var index = inputs[1] as IntSignal;
+            var value = inputs[2];
+
+            if (input == null || index == null) return;
+
+            if (index.Value < 0 || index.Value > input.Value.Count) return;
+
+            input.Value.Insert((int) index.Value, value);
+
+            PulseOutput(0, input);
         }
 
         public override Node Clone()
@@ -225,6 +256,25 @@ namespace FlowScriptPrototype.Array
         public override Node Clone()
         {
             return new ShiftNode();
+        }
+    }
+
+    [NativeNodeInfo("Array", "Join")]
+    class JoinNode : BinaryNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            var input = inputs[0] as ArraySignal;
+            var separator = inputs[1].ToString();
+
+            if (input == null) return;
+
+            PulseOutput(0, new StringSignal(String.Join(separator, input.Value)));
+        }
+
+        public override Node Clone()
+        {
+            return new JoinNode();
         }
     }
 }
