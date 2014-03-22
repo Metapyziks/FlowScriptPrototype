@@ -13,12 +13,14 @@ namespace FlowScriptPrototype
             get
             {
                 var str = _constValTextBox.Text;
-                long intVal;
+                long intVal; double doubleVal;
 
                 if (_sStringRegex.IsMatch(str)) {
                     return new StringSignal(str.Substring(1, str.Length - 2));
                 } else if (long.TryParse(str, out intVal)) {
                     return new IntSignal(intVal);
+                } else if (double.TryParse(str, out doubleVal)) {
+                    return new RealSignal(doubleVal);
                 } else {
                     return null;
                 }

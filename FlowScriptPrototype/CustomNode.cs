@@ -224,7 +224,7 @@ namespace FlowScriptPrototype
                             continue;
                         }
 
-                        index = Array.IndexOf(clone._outputs, socket.Node);
+                        index = System.Array.IndexOf(clone._outputs, socket.Node);
 
                         node.ConnectToInput(j, new Socket(_outputs[index], socket.Index));
                     }

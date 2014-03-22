@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Array.cs" />
     <Compile Include="CustomNode.cs" />
     <Compile Include="EditorForm.cs">
       <SubType>Form</SubType>

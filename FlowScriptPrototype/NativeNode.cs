@@ -17,7 +17,7 @@ namespace FlowScriptPrototype
             Category = category;
             Identifier = identifier;
 
-            Symbol = symbol ?? Identifier;
+            Symbol = symbol ?? String.Format("{0}.{1}", Category, Identifier);
         }
     }
 
@@ -237,6 +237,20 @@ namespace FlowScriptPrototype
         protected BinaryPredicateNode() : base(2) { }
     }
 
+    [NativeNodeInfo("Math", "EqualTo", "==")]
+    class EqualToNode : BinaryPredicateNode
+    {
+        protected override bool Evaluate(params Signal[] inputs)
+        {
+            return inputs[0].EqualTo(inputs[1]);
+        }
+
+        public override Node Clone()
+        {
+            return new EqualToNode();
+        }
+    }
+
     [NativeNodeInfo("Math", "GreaterThan", ">")]
     class GreaterThanNode : BinaryPredicateNode
     {
@@ -293,7 +307,51 @@ namespace FlowScriptPrototype
         }
     }
 
-    [NativeNodeInfo("Utils", "PrintLine")]
+    [NativeNodeInfo("Console", "ReadLine")]
+    class ReadLineNode : SocketNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            base.Pulse(new StringSignal(Console.ReadLine()));
+        }
+
+        public override Node Clone()
+        {
+            return new ReadLineNode();
+        }
+    }
+
+    [NativeNodeInfo("Console", "ReadKey")]
+    class ReadKeyNode : SocketNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            base.Pulse(new StringSignal(Console.ReadKey(true).Key.ToString()));
+        }
+
+        public override Node Clone()
+        {
+            return new ReadKeyNode();
+        }
+    }
+
+    [NativeNodeInfo("Console", "Print")]
+    class PrintNode : SocketNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            Console.Write(inputs[0].ToString());
+
+            base.Pulse(inputs);
+        }
+
+        public override Node Clone()
+        {
+            return new PrintNode();
+        }
+    }
+
+    [NativeNodeInfo("Console", "PrintLine")]
     class PrintLineNode : SocketNode
     {
         public override void Pulse(params Signal[] inputs)
@@ -306,6 +364,27 @@ namespace FlowScriptPrototype
         public override Node Clone()
         {
             return new PrintLineNode();
+        }
+    }
+
+    [NativeNodeInfo("Utils", "ParseInt")]
+    class ParseIntNode : SocketNode
+    {
+        public override void Pulse(params Signal[] inputs)
+        {
+            var str = inputs[0].ToString();
+            long val;
+
+            if (long.TryParse(str, out val)) {
+                base.Pulse(new IntSignal(val));
+            } else {
+                base.Pulse(new NaNSignal());
+            }
+        }
+
+        public override Node Clone()
+        {
+            return new ParseIntNode();
         }
     }
 }

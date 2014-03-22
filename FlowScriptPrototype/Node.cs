@@ -114,7 +114,7 @@ namespace FlowScriptPrototype
                 var node = pulsing[i];
                 node._toPulse = false;
                 inputs[i] = (Signal[]) node._inputs.Clone();
-                Array.Clear(node._inputs, 0, node.InputCount);
+                System.Array.Clear(node._inputs, 0, node.InputCount);
             }
 
             for (int i = 0; i < pulsing.Length; ++i) {

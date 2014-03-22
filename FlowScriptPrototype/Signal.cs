@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace FlowScriptPrototype
 {
@@ -25,7 +26,11 @@ namespace FlowScriptPrototype
     {
         public override Signal Add(Signal other)
         {
-            return new NaNSignal();
+            if (other is StringSignal) {
+                return new StringSignal(ToString() + other.ToString());
+            } else {
+                return new NaNSignal();
+            }
         }
 
         public override Signal Subtract(Signal other)
@@ -65,17 +70,22 @@ namespace FlowScriptPrototype
 
         public override string ToString()
         {
- 	         return float.NaN.ToString();
+            return float.NaN.ToString();
         }
     }
 
     public class StringSignal : NaNSignal
     {
-        public String Value { get; set; }
+        public String Value { get; private set; }
 
         public StringSignal(String val)
         {
             Value = val;
+        }
+
+        public override Signal Add(Signal other)
+        {
+            return new StringSignal(Value + other.ToString());
         }
 
         public override bool EqualTo(Signal other)
@@ -91,7 +101,7 @@ namespace FlowScriptPrototype
 
     public class IntSignal : Signal
     {
-        public long Value { get; set; }
+        public long Value { get; private set; }
 
         public IntSignal(long val)
         {
@@ -107,6 +117,8 @@ namespace FlowScriptPrototype
         {
             if (other is IntSignal) {
                 return new IntSignal(Value + ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value + ((RealSignal) other).Value);
             } else {
                 return new NaNSignal();
             }
@@ -116,6 +128,8 @@ namespace FlowScriptPrototype
         {
             if (other is IntSignal) {
                 return new IntSignal(Value - ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value - ((RealSignal) other).Value);
             } else {
                 return new NaNSignal();
             }
@@ -125,6 +139,8 @@ namespace FlowScriptPrototype
         {
             if (other is IntSignal) {
                 return new IntSignal(Value * ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value * ((RealSignal) other).Value);
             } else {
                 return new NaNSignal();
             }
@@ -134,6 +150,8 @@ namespace FlowScriptPrototype
         {
             if (other is IntSignal) {
                 return new IntSignal(Value / ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value / ((RealSignal) other).Value);
             } else {
                 return new NaNSignal();
             }
@@ -150,13 +168,16 @@ namespace FlowScriptPrototype
 
         public override bool EqualTo(Signal other)
         {
-            return other is IntSignal && Value.Equals(((IntSignal) other).Value);
+            return (other is IntSignal && Value.Equals(((IntSignal) other).Value))
+                || (other is RealSignal && Value.Equals(((RealSignal) other).Value));
         }
 
         public override bool GreaterThan(Signal other)
         {
             if (other is IntSignal) {
                 return Value > ((IntSignal) other).Value;
+            } else if (other is RealSignal) {
+                return Value > ((RealSignal) other).Value;
             } else {
                 return false;
             }
@@ -166,6 +187,100 @@ namespace FlowScriptPrototype
         {
             if (other is IntSignal) {
                 return Value < ((IntSignal) other).Value;
+            } else if (other is RealSignal) {
+                return Value < ((RealSignal) other).Value;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    public class RealSignal : Signal
+    {
+        public double Value { get; private set; }
+
+        public RealSignal(double value)
+        {
+            Value = value;
+        }
+
+        public override string ToString()
+        {
+            return Value.ToString();
+        }
+
+        public override Signal Add(Signal other)
+        {
+            if (other is IntSignal) {
+                return new RealSignal(Value + ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value + ((RealSignal) other).Value);
+            } else {
+                return new NaNSignal();
+            }
+        }
+
+        public override Signal Subtract(Signal other)
+        {
+            if (other is IntSignal) {
+                return new RealSignal(Value - ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value - ((RealSignal) other).Value);
+            } else {
+                return new NaNSignal();
+            }
+        }
+
+        public override Signal Multiply(Signal other)
+        {
+            if (other is IntSignal) {
+                return new RealSignal(Value * ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value * ((RealSignal) other).Value);
+            } else {
+                return new NaNSignal();
+            }
+        }
+
+        public override Signal Divide(Signal other)
+        {
+            if (other is IntSignal) {
+                return new RealSignal(Value / ((IntSignal) other).Value);
+            } else if (other is RealSignal) {
+                return new RealSignal(Value / ((RealSignal) other).Value);
+            } else {
+                return new NaNSignal();
+            }
+        }
+
+        public override Signal Modulo(Signal other)
+        {
+            return new NaNSignal();
+        }
+
+        public override bool EqualTo(Signal other)
+        {
+            return (other is IntSignal && Value.Equals(((IntSignal) other).Value))
+                || (other is RealSignal && Value.Equals(((RealSignal) other).Value));
+        }
+
+        public override bool GreaterThan(Signal other)
+        {
+            if (other is IntSignal) {
+                return Value > ((IntSignal) other).Value;
+            } else if (other is RealSignal) {
+                return Value > ((RealSignal) other).Value;
+            } else {
+                return false;
+            }
+        }
+
+        public override bool LessThan(Signal other)
+        {
+            if (other is IntSignal) {
+                return Value < ((IntSignal) other).Value;
+            } else if (other is RealSignal) {
+                return Value < ((RealSignal) other).Value;
             } else {
                 return false;
             }
