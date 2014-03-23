@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -106,11 +107,26 @@ namespace FlowScriptPrototype
         {
             _nodeMenu.Items.Clear();
 
-            _nodeMenu.Items.Add("Run Test").Click += (sender, e) => {
+            var fileMenu = new ToolStripMenuItem("File");
+
+            fileMenu.DropDownItems.Add("Save").Click += (sender, e) => {
+                var path = Path.Combine("Data", Prototype.Category, String.Format("{0}.json", Prototype.Identifier));
+                var dir = Path.GetDirectoryName(path);
+
+                if (!Directory.Exists(dir)) {
+                    Directory.CreateDirectory(dir);
+                }
+
+                File.WriteAllText(path, Prototype.Serialize(new Serialization.SerializationContext()));
+            };
+
+            fileMenu.DropDownItems.Add("Run Test").Click += (sender, e) => {
                 Prototype.PulseInput(0, new IntSignal(1));
 
                 while (Node.Step());
             };
+
+            _nodeMenu.Items.Add(fileMenu);
 
             _nodeMenu.Items.Add("Constant").Click += (sender, e) => {
                 var dialog = new PlaceConstantForm();

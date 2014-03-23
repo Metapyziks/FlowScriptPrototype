@@ -82,6 +82,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Serialization.cs" />
     <Compile Include="Signal.cs" />
   </ItemGroup>
   <ItemGroup>

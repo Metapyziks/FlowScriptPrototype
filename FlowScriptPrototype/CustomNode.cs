@@ -164,6 +164,14 @@ namespace FlowScriptPrototype
             return new ReferenceNode(Prototype);
         }
 
+        public override string Serialize(Serialization.SerializationContext ctx)
+        {
+            return ctx.Obj(
+                category => ctx.Str(Prototype.Category),
+                identifier => ctx.Str(Prototype.Identifier)
+            );
+        }
+
         public override string ToString()
         {
             return Prototype.ToString();
@@ -172,6 +180,8 @@ namespace FlowScriptPrototype
 
     public class PrototypeNode : CustomNode
     {
+        private int _nextIndex;
+
         private List<Node> _inner;
 
         private Node[] _inputs;
@@ -245,6 +255,8 @@ namespace FlowScriptPrototype
         {
             _inner = new List<Node>();
 
+            _nextIndex = 0;
+
             Category = category;
             Identifier = identifier;
 
@@ -252,13 +264,13 @@ namespace FlowScriptPrototype
             _outputs = new PlacedNode[OutputCount];
 
             for (int i = 0; i < InputCount; ++i) {
-                var input = new InOutPlacedNode(String.Format("In {0}", i + 1), true);
+                var input = new InOutPlacedNode(_nextIndex++, String.Format("In {0}", i + 1), true);
                 input.Location = new System.Drawing.Point(8, 8 + i * (input.Size.Height + 8));
                 _inputs[i] = input;
             }
 
             for (int i = 0; i < OutputCount; ++i) {
-                var output = new InOutPlacedNode(String.Format("Out {0}", i + 1), false);
+                var output = new InOutPlacedNode(_nextIndex++, String.Format("Out {0}", i + 1), false);
                 output.Location = new System.Drawing.Point(16 + output.Size.Width, 8 + i * (output.Size.Height + 8));
                 _outputs[i] = output;
             }
@@ -292,7 +304,7 @@ namespace FlowScriptPrototype
 
         public PlacedNode AddConstant(Signal constant)
         {
-            var node = new PlacedNode(new ConstNode(constant));
+            var node = new PlacedNode(_nextIndex++, new ConstNode(constant));
             _inner.Add(node);
 
             return node;
@@ -300,7 +312,7 @@ namespace FlowScriptPrototype
 
         public PlacedNode AddNode(String category, String identifier)
         {
-            var node = new PlacedNode(Node.GetInstance(category, identifier));
+            var node = new PlacedNode(_nextIndex++, Node.GetInstance(category, identifier));
             _inner.Add(node);
 
             return node;
@@ -342,6 +354,19 @@ namespace FlowScriptPrototype
         {
             _outputs[index].ConnectToInput(0, input);
             return this;
+        }
+
+        public override string Serialize(Serialization.SerializationContext ctx)
+        {
+            return ctx.Obj(
+                category => ctx.Str(Category),
+                identifier => ctx.Str(Identifier),
+                nodes => ctx.Arr(
+                    _inputs.Union(_outputs).Union(_inner)
+                        .Select(x => x.Serialize(ctx))
+                        .ToArray()
+                )
+            );
         }
 
         public override string ToString()

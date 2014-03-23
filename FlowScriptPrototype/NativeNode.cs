@@ -59,6 +59,16 @@ namespace FlowScriptPrototype
             return _outputs[index];
         }
 
+        public override string Serialize(Serialization.SerializationContext ctx)
+        {
+            var attrib = GetType().GetCustomAttribute<NativeNodeInfoAttribute>();
+
+            return ctx.Obj(
+                category => ctx.Str(attrib.Category),
+                identifier => ctx.Str(attrib.Identifier)
+            );
+        }
+
         public override string ToString()
         {
             var attrib = GetType().GetCustomAttribute<NativeNodeInfoAttribute>();
@@ -123,6 +133,15 @@ namespace FlowScriptPrototype
         public override Node Clone()
         {
             return new ConstNode(Value);
+        }
+
+        public override string Serialize(Serialization.SerializationContext ctx)
+        {
+            return ctx.Obj(
+                @class => ctx.Str("Constant"),
+                type => ctx.Str(Value.GetType().FullName),
+                value => (Value is NaNSignal) ? "\"NaN\"" : value.ToString()
+            );
         }
 
         public override string ToString()

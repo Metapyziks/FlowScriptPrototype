@@ -30,8 +30,7 @@ namespace FlowScriptPrototype.Array
             return String.Format("[Array {0:x}]", Value.GetHashCode());
         }
     }
-
-
+    
     [NativeNodeInfo("Array", "New")]
     class NewNode : SocketNode
     {

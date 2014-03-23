@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using FlowScriptPrototype.Serialization;
 
 namespace FlowScriptPrototype
 {
@@ -168,5 +170,7 @@ namespace FlowScriptPrototype
         }
 
         public abstract Node Clone();
+
+        public abstract String Serialize(SerializationContext ctx);
     }
 }

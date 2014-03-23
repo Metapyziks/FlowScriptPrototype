@@ -43,6 +43,8 @@ namespace FlowScriptPrototype
 
         private Node _instance;
 
+        public int Index { get; private set; }
+
         public Point Location { get; set; }
 
         public Size Size { get; private set; }
@@ -58,9 +60,11 @@ namespace FlowScriptPrototype
 
         public virtual String Text { get { return _instance.ToString(); } }
 
-        internal PlacedNode(Node instance)
+        internal PlacedNode(int index, Node instance)
             : base(instance.InputCount, instance.OutputCount)
         {
+            Index = index;
+
             _instance = instance;
 
             Location = new Point();
@@ -156,6 +160,28 @@ namespace FlowScriptPrototype
 
             context.DrawString(Text, _sLabelFont, _sLabelBrush, Bounds, format);
         }
+
+        public override string Serialize(Serialization.SerializationContext ctx)
+        {
+            return ctx.Obj(
+                index => ctx.Int(Index),
+                x => ctx.Int(Location.X),
+                y => ctx.Int(Location.Y),
+                @type => ctx.Str(IsInput ? "Input" : IsOutput ? "Output" : "Inner"),
+                outputs => ctx.Arr(Enumerable.Range(0, OutputCount)
+                    .Select(x => GetOutputs(x))
+                    .Select(x => ctx.Arr(
+                        x.Select(y =>
+                            ctx.Obj(
+                                index => ctx.Int(y.Index),
+                                node => ctx.Int(((PlacedNode) y.Node).Index)
+                            )
+                        ).ToArray()
+                    )).ToArray()
+                ),
+                data => _instance.Serialize(ctx)
+            );
+        }
     }
 
     public class InOutPlacedNode : PlacedNode
@@ -170,8 +196,8 @@ namespace FlowScriptPrototype
 
         public override string Text { get { return Identifier; } }
 
-        internal InOutPlacedNode(String ident, bool isInput)
-            : base(new SocketNode())
+        internal InOutPlacedNode(int index, String ident, bool isInput)
+            : base(index, new SocketNode())
         {
             Identifier = ident;
 
