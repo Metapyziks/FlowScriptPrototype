@@ -15,7 +15,9 @@ namespace FlowScriptPrototype
                 var str = _constValTextBox.Text;
                 long intVal; double doubleVal;
 
-                if (_sStringRegex.IsMatch(str)) {
+                if (str == "NaN") {
+                    return new NaNSignal();
+                } else if (_sStringRegex.IsMatch(str)) {
                     return new StringSignal(str.Substring(1, str.Length - 2));
                 } else if (long.TryParse(str, out intVal)) {
                     return new IntSignal(intVal);

@@ -201,7 +201,7 @@ namespace FlowScriptPrototype.Array
             if (input.Value.Count == 0) return;
 
             var last = input.Value.Last();
-            input.Value.RemoveAt(input.Value.Count);
+            input.Value.RemoveAt(input.Value.Count - 1);
 
             PulseOutput(0, input);
             PulseOutput(1, last);
