@@ -140,7 +140,7 @@ namespace FlowScriptPrototype
             return ctx.Obj(
                 @class => ctx.Str("Constant"),
                 type => ctx.Str(Value.GetType().FullName),
-                value => (Value is NaNSignal) ? "\"NaN\"" : value.ToString()
+                value => (Value is NaNSignal) ? "\"NaN\"" : Value.ToString()
             );
         }
 
