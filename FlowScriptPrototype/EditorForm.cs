@@ -22,6 +22,8 @@ namespace FlowScriptPrototype
         private bool _wiring;
         private Socket _wireStart;
 
+        private bool _modified;
+
         public PrototypeNode Prototype { get; private set; }
 
         public EditorForm(PrototypeNode prototype = null)
@@ -33,9 +35,34 @@ namespace FlowScriptPrototype
 
             KeyPreview = true;
             
-            Text = Prototype.ToString();
+            SetModified(prototype == null);
 
             _sOpenForms.Add(this);
+        }
+
+        private void SetModified(bool modified)
+        {
+            _modified = modified;
+
+            if (_modified) {
+                Text = String.Format("{0} [modified]", Prototype.ToString());
+            } else {
+                Text = Prototype.ToString();
+            }
+        }
+
+        private void Save()
+        {
+            var path = Path.Combine("Data", Prototype.Category, String.Format("{0}.json", Prototype.Identifier));
+            var dir = Path.GetDirectoryName(path);
+
+            if (!Directory.Exists(dir)) {
+                Directory.CreateDirectory(dir);
+            }
+
+            ((PrototypeNodeSave) Prototype.GetSave()).Save(path);
+
+            SetModified(false);
         }
 
         protected override void OnClosed(EventArgs e)
@@ -80,6 +107,8 @@ namespace FlowScriptPrototype
                     node.Offset(diff);
                 }
 
+                SetModified(true);
+
                 _dragging = false;
                 _viewPanel.Invalidate();
             }
@@ -98,6 +127,8 @@ namespace FlowScriptPrototype
             if (!socket.IsNull) {
                 _wireStart.ConnectToInput(socket);
                 Prototype.ClearRecycledInstances();
+
+                SetModified(true);
             }
 
             _wiring = false;
@@ -110,14 +141,7 @@ namespace FlowScriptPrototype
             var fileMenu = new ToolStripMenuItem("File");
 
             fileMenu.DropDownItems.Add("Save").Click += (sender, e) => {
-                var path = Path.Combine("Data", Prototype.Category, String.Format("{0}.json", Prototype.Identifier));
-                var dir = Path.GetDirectoryName(path);
-
-                if (!Directory.Exists(dir)) {
-                    Directory.CreateDirectory(dir);
-                }
-
-                File.WriteAllText(path, Prototype.Serialize(new Serialization.SerializationContext()));
+                Save();
             };
 
             fileMenu.DropDownItems.Add("Run Test").Click += (sender, e) => {
@@ -310,6 +334,8 @@ namespace FlowScriptPrototype
                     StartWiring(socket);
                 } else if (e.Button == System.Windows.Forms.MouseButtons.Right) {
                     socket.ClearOutputs();
+
+                    SetModified(true);
                 }
 
                 return;
@@ -347,18 +373,27 @@ namespace FlowScriptPrototype
 
         private void EditorForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Delete) {
-                var deleted = _selection.Where(x => !x.IsInput && !x.IsOutput).ToArray();
+            switch (e.KeyCode) {
+                case Keys.Delete: {
+                    var deleted = _selection.Where(x => !x.IsInput && !x.IsOutput).ToArray();
 
-                if (deleted.Length > 0) {
-                    foreach (var node in deleted) {
-                        Prototype.RemoveNode(node);
-                        _selection.Remove(node);
+                    if (deleted.Length > 0) {
+                        foreach (var node in deleted) {
+                            Prototype.RemoveNode(node);
+                            _selection.Remove(node);
+
+                            SetModified(true);
+                        }
+
+                        Prototype.ClearRecycledInstances();
+                        _viewPanel.Invalidate();
                     }
-
-                    Prototype.ClearRecycledInstances();
-                    _viewPanel.Invalidate();
-                }
+                } break;
+                case Keys.S: {
+                    if (ModifierKeys.HasFlag(Keys.Control)) {
+                        Save();
+                    }
+                } break;
             }
         }
     }

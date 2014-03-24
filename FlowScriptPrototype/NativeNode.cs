@@ -59,14 +59,15 @@ namespace FlowScriptPrototype
             return _outputs[index];
         }
 
-        public override string Serialize(Serialization.SerializationContext ctx)
+        internal override NodeSave GetSave()
         {
             var attrib = GetType().GetCustomAttribute<NativeNodeInfoAttribute>();
 
-            return ctx.Obj(
-                category => ctx.Str(attrib.Category),
-                identifier => ctx.Str(attrib.Identifier)
-            );
+            if (attrib != null) {
+                return new NodeSave { category = attrib.Category, identifier = attrib.Identifier };
+            } else {
+                return new NodeSave { category = "Unknown", identifier = "Unknown" };
+            }
         }
 
         public override string ToString()
@@ -135,13 +136,21 @@ namespace FlowScriptPrototype
             return new ConstNode(Value);
         }
 
-        public override string Serialize(Serialization.SerializationContext ctx)
+        internal override NodeSave GetSave()
         {
-            return ctx.Obj(
-                @class => ctx.Str("Constant"),
-                type => ctx.Str(Value.GetType().FullName),
-                value => (Value is NaNSignal) ? "\"NaN\"" : Value.ToString()
-            );
+            if (Value is StringSignal) {
+                return new StringNodeSave { value = ((StringSignal) Value).Value };
+            }
+
+            if (Value is IntSignal) {
+                return new IntNodeSave { value = ((IntSignal) Value).Value };
+            }
+
+            if (Value is RealSignal) {
+                return new RealNodeSave { value = ((RealSignal) Value).Value };
+            }
+
+            return new NaNNodeSave();
         }
 
         public override string ToString()

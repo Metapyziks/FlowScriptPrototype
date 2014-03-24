@@ -164,12 +164,9 @@ namespace FlowScriptPrototype
             return new ReferenceNode(Prototype);
         }
 
-        public override string Serialize(Serialization.SerializationContext ctx)
+        internal override NodeSave GetSave()
         {
-            return ctx.Obj(
-                category => ctx.Str(Prototype.Category),
-                identifier => ctx.Str(Prototype.Identifier)
-            );
+            return new NodeSave { category = Prototype.Category, identifier = Prototype.Identifier };
         }
 
         public override string ToString()
@@ -356,17 +353,16 @@ namespace FlowScriptPrototype
             return this;
         }
 
-        public override string Serialize(Serialization.SerializationContext ctx)
+        internal override NodeSave GetSave()
         {
-            return ctx.Obj(
-                category => ctx.Str(Category),
-                identifier => ctx.Str(Identifier),
-                nodes => ctx.Arr(
-                    _inputs.Union(_outputs).Union(_inner)
-                        .Select(x => x.Serialize(ctx))
-                        .ToArray()
-                )
-            );
+            return new PrototypeNodeSave {
+                category = Category,
+                identifier = Identifier,
+                nodes = _inputs.Union(_outputs).Union(_inner)
+                    .Cast<PlacedNode>()
+                    .Select(x => x.GetPlacedNodeSave())
+                    .ToArray()
+            };
         }
 
         public override string ToString()

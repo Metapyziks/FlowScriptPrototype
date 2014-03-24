@@ -161,26 +161,27 @@ namespace FlowScriptPrototype
             context.DrawString(Text, _sLabelFont, _sLabelBrush, Bounds, format);
         }
 
-        public override string Serialize(Serialization.SerializationContext ctx)
+        internal PlacedNodeSave GetPlacedNodeSave()
         {
-            return ctx.Obj(
-                index => ctx.Int(Index),
-                x => ctx.Int(Location.X),
-                y => ctx.Int(Location.Y),
-                @type => ctx.Str(IsInput ? "Input" : IsOutput ? "Output" : "Inner"),
-                outputs => ctx.Arr(Enumerable.Range(0, OutputCount)
-                    .Select(x => GetOutputs(x))
-                    .Select(x => ctx.Arr(
-                        x.Select(y =>
-                            ctx.Obj(
-                                index => ctx.Int(y.Index),
-                                node => ctx.Int(((PlacedNode) y.Node).Index)
-                            )
-                        ).ToArray()
-                    )).ToArray()
-                ),
-                data => _instance.Serialize(ctx)
-            );
+            return new PlacedNodeSave {
+                index = Index,
+                x = Location.X,
+                y = Location.Y,
+                type = IsInput ? PlacedNodeType.Input : IsOutput ? PlacedNodeType.Output : PlacedNodeType.Inner,
+                outputs = Enumerable.Range(0, OutputCount)
+                    .Select(i => GetOutputs(i)
+                        .Select(o => new OutputSave {
+                            node = ((PlacedNode) o.Node).Index,
+                            socket = o.Index
+                        }).ToArray()
+                    ).ToArray(),
+                data = GetSave()
+            };
+        }
+
+        internal override NodeSave GetSave()
+        {
+            return _instance.GetSave();
         }
     }
 
