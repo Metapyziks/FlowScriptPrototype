@@ -8,14 +8,7 @@ using System.Web.Script.Serialization;
 
 namespace FlowScriptPrototype
 {
-    enum PlacedNodeType
-    {
-        Input = 0,
-        Output = 1,
-        Inner = 2
-    }
-
-    class PlacedNodeSave
+    class PlacedNodeSave<T> where T : NodeSave
     {
         public int index { get; set; }
 
@@ -23,11 +16,9 @@ namespace FlowScriptPrototype
 
         public int y { get; set; }
 
-        public PlacedNodeType type { get; set; }
-
         public OutputSave[][] outputs { get; set; }
 
-        public NodeSave data { get; set; }
+        public T data { get; set; }
     }
 
     class OutputSave
@@ -52,11 +43,23 @@ namespace FlowScriptPrototype
             return serializer.Deserialize<PrototypeNodeSave>(File.ReadAllText(path));
         }
 
-        public String category { get; set; }
+        public int width { get; set; }
 
-        public String identifier { get; set; }
+        public int height { get; set; }
 
-        public PlacedNodeSave[] nodes { get; set; }
+        public PlacedNodeSave<NodeSave>[] inputs { get; set; }
+
+        public PlacedNodeSave<NodeSave>[] outputs { get; set; }
+
+        public PlacedNodeSave<IntNodeSave>[] ints { get; set; }
+
+        public PlacedNodeSave<RealNodeSave>[] reals { get; set; }
+
+        public PlacedNodeSave<StringNodeSave>[] strings { get; set; }
+
+        public PlacedNodeSave<NaNNodeSave>[] nans { get; set; }
+
+        public PlacedNodeSave<NodeSave>[] inners { get; set; }
 
         public void Save(String path)
         {

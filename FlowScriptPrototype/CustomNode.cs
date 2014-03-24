@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace FlowScriptPrototype
@@ -13,6 +14,40 @@ namespace FlowScriptPrototype
             new Dictionary<PrototypeNode, Stack<PrototypeNode>>();
 
         private static List<ReferenceNode> _sWatchedReferences = new List<ReferenceNode>();
+
+        static CustomNode()
+        {
+            if (!Directory.Exists("Data")) return;
+
+            GetDeclarations("Data");
+            GetDefinitions("Data");
+        }
+
+        static void GetDeclarations(String dir)
+        {
+            foreach (var file in Directory.GetFiles(dir)) {
+                if (Path.GetExtension(file) != ".json") continue;
+
+                DeclarePrototype(PrototypeNodeSave.FromFile(file));
+            }
+
+            foreach (var subDir in Directory.GetDirectories(dir)) {
+                GetDeclarations(subDir);
+            }
+        }
+
+        static void GetDefinitions(String dir)
+        {
+            foreach (var file in Directory.GetFiles(dir)) {
+                if (Path.GetExtension(file) != ".json") continue;
+
+                DefinePrototype(PrototypeNodeSave.FromFile(file));
+            }
+
+            foreach (var subDir in Directory.GetDirectories(dir)) {
+                GetDefinitions(subDir);
+            }
+        }
         
         public static void CreatePrototype(String category, String identifier, int inputs, int outputs, Action<PrototypeNode> constructor)
         {
@@ -26,6 +61,68 @@ namespace FlowScriptPrototype
             _sRecycledInstances.Add(node, new Stack<PrototypeNode>());
 
             constructor(node);
+        }
+
+        static void ConnectInputs<T>(PrototypeNode node, PlacedNodeSave<T>[] inners)
+            where T : NodeSave
+        {
+            foreach (var inner in inners) {
+                var inst = node.GetNode(inner.index);
+                for (int i = 0; i < inner.outputs.Length; ++i) {
+                    foreach (var socket in inner.outputs[i]) {
+                        inst.ConnectToInput(i, new Socket(node.GetNode(socket.node), socket.socket));
+                    }
+                }
+            }
+        }
+
+        static void DeclarePrototype(PrototypeNodeSave save)
+        {
+            CreatePrototype(save.category, save.identifier, save.inputs.Length, save.outputs.Length, node => { });
+        }
+
+        static void DefinePrototype(PrototypeNodeSave save)
+        {
+            var node = GetCustomReference(save.category, save.identifier).Prototype;
+
+            node.EditorSize = new System.Drawing.Size(save.width, save.height);
+
+            foreach (var input in save.inputs) {
+                ((PlacedNode) node.GetInput(input.index).Node).Location =
+                    new System.Drawing.Point(input.x, input.y);
+            }
+
+            foreach (var output in save.outputs) {
+                ((PlacedNode) node.GetOutput(output.index - node.InputCount).Node).Location =
+                    new System.Drawing.Point(output.x, output.y);
+            }
+
+            foreach (var inner in save.inners) {
+                node.AddNode(inner);
+            }
+
+            foreach (var constant in save.ints) {
+                node.AddConstant(constant);
+            }
+
+            foreach (var constant in save.reals) {
+                node.AddConstant(constant);
+            }
+
+            foreach (var constant in save.strings) {
+                node.AddConstant(constant);
+            }
+
+            foreach (var constant in save.nans) {
+                node.AddConstant(constant);
+            }
+
+            ConnectInputs(node, save.inputs);
+            ConnectInputs(node, save.inners);
+            ConnectInputs(node, save.ints);
+            ConnectInputs(node, save.reals);
+            ConnectInputs(node, save.strings);
+            ConnectInputs(node, save.nans);
         }
 
         public static void CreateCategory(String category)
@@ -198,6 +295,8 @@ namespace FlowScriptPrototype
 
         public String Identifier { get; private set; }
 
+        public System.Drawing.Size EditorSize { get; set; }
+
         public override bool Active { get { return base.Active || _inner.Any(x => x.Active) || _outputs.Any(x => x.Active); } }
 
         private PrototypeNode(PrototypeNode clone)
@@ -271,6 +370,8 @@ namespace FlowScriptPrototype
                 output.Location = new System.Drawing.Point(16 + output.Size.Width, 8 + i * (output.Size.Height + 8));
                 _outputs[i] = output;
             }
+
+            EditorSize = new System.Drawing.Size(640, 480);
         }
 
         public void ClearRecycledInstances()
@@ -288,6 +389,17 @@ namespace FlowScriptPrototype
             return new Socket(_outputs[index], 0);
         }
 
+        internal PlacedNode GetNode(int index)
+        {
+            if (index < InputCount) {
+                return (PlacedNode) GetInput(index).Node;
+            } else if (index - InputCount < OutputCount) {
+                return (PlacedNode) GetOutput(index - InputCount).Node;
+            } else {
+                return _inner.Cast<PlacedNode>().First(x => x.Index == index);
+            }
+        }
+
         public override IEnumerable<Socket> GetOutputs(int index)
         {
             return _outputs[index].GetOutputs(0);
@@ -299,10 +411,57 @@ namespace FlowScriptPrototype
             return this;
         }
 
+        internal PlacedNode AddConstant<T>(PlacedNodeSave<T> save, Signal value)
+            where T : NodeSave
+        {
+            var node = new PlacedNode(save.index, new ConstNode(value)) {
+                Location = new System.Drawing.Point(save.x, save.y)
+            };
+
+            _inner.Add(node);
+
+            _nextIndex = Math.Max(_nextIndex, save.index + 1);
+
+            return node;
+        }
+
+        internal PlacedNode AddConstant(PlacedNodeSave<IntNodeSave> save)
+        {
+            return AddConstant(save, new IntSignal(save.data.value));
+        }
+
+        internal PlacedNode AddConstant(PlacedNodeSave<RealNodeSave> save)
+        {
+            return AddConstant(save, new RealSignal(save.data.value));
+        }
+
+        internal PlacedNode AddConstant(PlacedNodeSave<StringNodeSave> save)
+        {
+            return AddConstant(save, new StringSignal(save.data.value));
+        }
+
+        internal PlacedNode AddConstant(PlacedNodeSave<NaNNodeSave> save)
+        {
+            return AddConstant(save, new NaNSignal());
+        }
+
         public PlacedNode AddConstant(Signal constant)
         {
             var node = new PlacedNode(_nextIndex++, new ConstNode(constant));
             _inner.Add(node);
+
+            return node;
+        }
+
+        internal PlacedNode AddNode(PlacedNodeSave<NodeSave> save)
+        {
+            var node = new PlacedNode(save.index, Node.GetInstance(save.data.category, save.data.identifier)) {
+                Location = new System.Drawing.Point(save.x, save.y)
+            };
+
+            _inner.Add(node);
+
+            _nextIndex = Math.Max(_nextIndex, save.index + 1);
 
             return node;
         }
@@ -355,12 +514,42 @@ namespace FlowScriptPrototype
 
         internal override NodeSave GetSave()
         {
+            var inner = _inner.Cast<PlacedNode>().ToArray();
+            var consts = inner.Where(x => x.Instance is ConstNode);
+
             return new PrototypeNodeSave {
                 category = Category,
                 identifier = Identifier,
-                nodes = _inputs.Union(_outputs).Union(_inner)
+                width = EditorSize.Width,
+                height = EditorSize.Height,
+                inputs = _inputs
                     .Cast<PlacedNode>()
-                    .Select(x => x.GetPlacedNodeSave())
+                    .Select(x => x.GetPlacedNodeSave<NodeSave>())
+                    .ToArray(),
+                outputs = _outputs
+                    .Cast<PlacedNode>()
+                    .Select(x => x.GetPlacedNodeSave<NodeSave>())
+                    .ToArray(),
+                inners = inner
+                    .Where(x => !(x.Instance is ConstNode))
+                    .Select(x => x.GetPlacedNodeSave<NodeSave>())
+                    .ToArray(),
+                ints = consts
+                    .Where(x => ((ConstNode) x.Instance).Value.GetType() == typeof(IntSignal))
+                    .Select(x => x.GetPlacedNodeSave<IntNodeSave>())
+                    .ToArray(),
+                reals = consts
+                    .Where(x => ((ConstNode) x.Instance).Value.GetType() == typeof(RealSignal))
+                    .Select(x => x.GetPlacedNodeSave<RealNodeSave>())
+                    .ToArray(),
+                strings = consts
+                    .Where(x => ((ConstNode) x.Instance).Value.GetType() == typeof(StringSignal))
+                    .Select(x => x.GetPlacedNodeSave<StringNodeSave>())
+                    .ToArray(),
+                nans = consts
+                    .Where(x => ((ConstNode) x.Instance).Value is NaNSignal)
+                    .Where(x => ((ConstNode) x.Instance).Value.GetType() == typeof(NaNSignal))
+                    .Select(x => x.GetPlacedNodeSave<NaNNodeSave>())
                     .ToArray()
             };
         }

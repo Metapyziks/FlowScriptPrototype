@@ -41,7 +41,7 @@ namespace FlowScriptPrototype
             context.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
         }
 
-        private Node _instance;
+        public Node Instance { get; private set; }
 
         public int Index { get; private set; }
 
@@ -58,14 +58,14 @@ namespace FlowScriptPrototype
             get { return new Rectangle(Location, Size); }
         }
 
-        public virtual String Text { get { return _instance.ToString(); } }
+        public virtual String Text { get { return Instance.ToString(); } }
 
         internal PlacedNode(int index, Node instance)
             : base(instance.InputCount, instance.OutputCount)
         {
             Index = index;
 
-            _instance = instance;
+            Instance = instance;
 
             Location = new Point();
             
@@ -87,27 +87,27 @@ namespace FlowScriptPrototype
 
         public override Node ConnectToInput(int index, Socket input)
         {
-            return _instance.ConnectToInput(index, input);
+            return Instance.ConnectToInput(index, input);
         }
 
         public override Node ClearOutputs(int index)
         {
-            return _instance.ClearOutputs(index);
+            return Instance.ClearOutputs(index);
         }
 
         public override IEnumerable<Socket> GetOutputs(int index)
         {
-            return _instance.GetOutputs(index);
+            return Instance.GetOutputs(index);
         }
 
         public override void Pulse(params Signal[] inputs)
         {
-            _instance.Pulse(inputs);
+            Instance.Pulse(inputs);
         }
 
         public override Node Clone()
         {
-            return _instance.Clone();
+            return Instance.Clone();
         }
 
         public Point GetInputLocation(int index)
@@ -136,7 +136,7 @@ namespace FlowScriptPrototype
                 for (int i = 0; i < OutputCount; ++i) {
                     var loc = GetOutputLocation(i);
 
-                    foreach (var socket in _instance.GetOutputs(i)) {
+                    foreach (var socket in Instance.GetOutputs(i)) {
                         var other = socket.Node as PlacedNode;
 
                         if (other == null) continue;
@@ -161,13 +161,13 @@ namespace FlowScriptPrototype
             context.DrawString(Text, _sLabelFont, _sLabelBrush, Bounds, format);
         }
 
-        internal PlacedNodeSave GetPlacedNodeSave()
+        internal PlacedNodeSave<T> GetPlacedNodeSave<T>()
+            where T : NodeSave
         {
-            return new PlacedNodeSave {
+            return new PlacedNodeSave<T> {
                 index = Index,
                 x = Location.X,
                 y = Location.Y,
-                type = IsInput ? PlacedNodeType.Input : IsOutput ? PlacedNodeType.Output : PlacedNodeType.Inner,
                 outputs = Enumerable.Range(0, OutputCount)
                     .Select(i => GetOutputs(i)
                         .Select(o => new OutputSave {
@@ -175,13 +175,13 @@ namespace FlowScriptPrototype
                             socket = o.Index
                         }).ToArray()
                     ).ToArray(),
-                data = GetSave()
+                data = (T) GetSave()
             };
         }
 
         internal override NodeSave GetSave()
         {
-            return _instance.GetSave();
+            return Instance.GetSave();
         }
     }
 

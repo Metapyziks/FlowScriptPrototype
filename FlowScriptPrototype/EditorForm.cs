@@ -28,10 +28,25 @@ namespace FlowScriptPrototype
 
         public EditorForm(PrototypeNode prototype = null)
         {
-            Prototype = prototype ?? new PrototypeNode("Example", "Test", 1, 1);
+            if (prototype == null) {
+                if (CustomNode.CustomCategories.Contains("Example") &&
+                    CustomNode.GetCustomIdentifiers("Example").Contains("Test")) {
+                    Prototype = prototype = CustomNode.GetCustomReference("Example", "Test").Prototype;
+                } else {
+                    CustomNode.CreatePrototype("Example", "Test", 1, 1, node => {
+                        Prototype = node;
+                        node.EditorSize = ClientSize;
+                    });
+                }
+            } else {
+                Prototype = prototype;
+            }
+
             _selection = new List<PlacedNode>();
 
             InitializeComponent();
+
+            ClientSize = Prototype.EditorSize;
 
             KeyPreview = true;
             
@@ -394,6 +409,15 @@ namespace FlowScriptPrototype
                         Save();
                     }
                 } break;
+            }
+        }
+
+        private void EditorForm_ResizeEnd(object sender, EventArgs e)
+        {
+            if (Prototype.EditorSize != ClientSize) {
+                Prototype.EditorSize = ClientSize;
+
+                SetModified(true);
             }
         }
     }

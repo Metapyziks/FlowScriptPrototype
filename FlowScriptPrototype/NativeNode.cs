@@ -298,7 +298,7 @@ namespace FlowScriptPrototype
     {
         protected override bool Evaluate(params Signal[] inputs)
         {
-            return !inputs[0].LessThan(inputs[1]);
+            return !inputs[0].GreaterThan(inputs[1]) || inputs[0].EqualTo(inputs[1]);
         }
 
         public override Node Clone()
@@ -312,7 +312,7 @@ namespace FlowScriptPrototype
     {
         protected override bool Evaluate(params Signal[] inputs)
         {
-            return inputs[0].GreaterThan(inputs[1]) || inputs[0].EqualTo(inputs[1]);
+            return inputs[0].LessThan(inputs[1]);
         }
 
         public override Node Clone()

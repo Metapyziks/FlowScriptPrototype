@@ -63,7 +63,7 @@ namespace FlowScriptPrototype.Array
         }
     }
 
-    [NativeNodeInfo("Array", "Index", "[]")]
+    [NativeNodeInfo("Array", "Index", "[ ]")]
     class IndexNode : BinaryNode
     {
         public override void Pulse(params Signal[] inputs)

@@ -65,6 +65,7 @@ namespace FlowScriptPrototype
             this.MainMenuStrip = this._nodeMenu;
             this.Name = "EditorForm";
             this.Text = "EditorForm";
+            this.ResizeEnd += new System.EventHandler(this.EditorForm_ResizeEnd);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.EditorForm_KeyDown);
             this.ResumeLayout(false);
             this.PerformLayout();
